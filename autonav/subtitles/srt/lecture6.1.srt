@@ -1,0 +1,544 @@
+1
+00:00:00,100 --> 00:00:07,250
+Welcome back everybody to lecture video 6.1 This week we will look at filters in general.
+
+2
+00:00:07,250 --> 00:00:12,210
+And now in this first video we will look at the Bayes filter, which is a direct extension
+
+3
+00:00:12,210 --> 00:00:18,029
+of what we have seen last week with the application of the Bayes rule.
+
+4
+00:00:18,029 --> 00:00:24,329
+So one assumption that we already made last week is the so called Markov assumption.
+
+5
+00:00:24,329 --> 00:00:27,989
+It states that the observations only depend on the current state,
+
+6
+00:00:27,989 --> 00:00:33,890
+so if we have an expression like this that we want to infer the likelihood that we make a certain
+
+7
+00:00:33,890 --> 00:00:40,829
+sensor measurement, given the hole sequence of previous world states and previous sensor
+
+8
+00:00:40,829 --> 00:00:46,789
+measurements, potentially previous motion commands. Then we can actually collapse that into
+
+9
+00:00:46,789 --> 00:00:52,859
+the very simple expression of the probability of the sensor measurement, given our current
+
+10
+00:00:52,859 --> 00:00:58,839
+world state. And furthermore, the Markov assumption also
+
+11
+00:00:58,839 --> 00:01:04,540
+says that the current state only depends on the previous state and the current action that
+
+12
+00:01:04,540 --> 00:01:10,079
+we have issued. And these two assumptions are called the Markov
+
+13
+00:01:10,079 --> 00:01:18,570
+assumptions and they strongly simplify the dependencies between these individual random
+
+14
+00:01:18,570 --> 00:01:22,799
+variables. A different way of drawing that is in such
+
+15
+00:01:22,799 --> 00:01:29,200
+a process diagram or a Bayesian network as it is also called.
+
+16
+00:01:29,200 --> 00:01:35,729
+Here the nodes correspond to random variables and arrows in between two random variables
+
+17
+00:01:35,729 --> 00:01:47,880
+represent dependency between to random variables, so for example here in the middle x_t depends
+
+18
+00:01:47,880 --> 00:01:56,320
+on u_t because it has an arrow in between but it also depends on the previous state x_(t-1).
+
+19
+00:01:56,320 --> 00:02:04,460
+And the sensor observations z_t for example only depends on the world state x_t.
+
+20
+00:02:04,460 --> 00:02:09,139
+And this is now a temporary process because in
+
+21
+00:02:09,139 --> 00:02:15,390
+every time step we have a world state variable x_t, we have a motion command u_t, and we
+
+22
+00:02:15,390 --> 00:02:21,900
+have a sensor observation z_t. And something like this is called a temporal process 
+
+23
+00:02:21,900 --> 00:02:27,600
+because the individual notes are actually random variables this is a so called stochastic process.
+
+24
+00:02:27,600 --> 00:02:31,570
+And this is the model that lies behind many
+
+25
+00:02:31,570 --> 00:02:38,710
+of the filters that we will see this week. So the underlying assumptions of the Markov
+
+26
+00:02:38,710 --> 00:02:46,300
+filter or the Markov assumption are that we are actually living in a static world so if
+
+27
+00:02:46,300 --> 00:02:52,120
+things are not influenced by an action that we are actually giving or that we are model in
+
+28
+00:02:52,120 --> 00:02:57,930
+this vector u, then we assume that everything else stays the same.
+
+29
+00:02:57,930 --> 00:03:02,820
+Furthermore, we assume that the noise that we have on our sensors is completely independent
+
+30
+00:03:02,820 --> 00:03:09,450
+because if this noise would be dependent on each other then we would need additional arrows
+
+31
+00:03:09,450 --> 00:03:15,480
+in between the noise variables And furthermore, we assume that our model
+
+32
+00:03:15,480 --> 00:03:25,900
+is perfect and that we don't have any approximation errors that again might violate this independence assumption.
+
+33
+00:03:25,900 --> 00:03:29,170
+So and this now is the basis for the Bayes
+
+34
+00:03:29,170 --> 00:03:33,860
+filter. The idea is as follows, we again have a robot
+
+35
+00:03:33,860 --> 00:03:40,860
+for example that goes around and takes a sequence of observations z_1 to z_t and during that
+
+36
+00:03:40,860 --> 00:03:47,610
+it issues a sequence of actions or motion commands u_1 to u_t.
+
+37
+00:03:47,610 --> 00:03:56,420
+And it is also equipped with two models namely a sensor model that describes the mapping between
+
+38
+00:03:56,420 --> 00:04:01,700
+how likely sensor readings are given that we are in a certain world state.
+
+39
+00:04:01,700 --> 00:04:06,390
+And we have an action model or motion model that describes how our actions influence the
+
+40
+00:04:06,390 --> 00:04:10,480
+world state. And we generally assume that we are given
+
+41
+00:04:10,480 --> 00:04:16,259
+a prior probability of the system state that is denoted by P(x).
+
+42
+00:04:16,259 --> 00:04:23,669
+So if you have to build a system like this and don't know what's a good initialization
+
+43
+00:04:23,669 --> 00:04:31,689
+for your prior is, then typically it's a good idea then to have a very brought prior, for example
+
+44
+00:04:31,689 --> 00:04:37,210
+a uniformly or almost uniformly distributes your belief mass.
+
+45
+00:04:37,210 --> 00:04:43,020
+And from these assumptions here or from this input we want to compute the world state of
+
+46
+00:04:43,020 --> 00:04:51,379
+the dynamic system at all times from t_1 to t_t, to the end or the current time step.
+
+47
+00:04:51,379 --> 00:05:00,340
+And this probability then, so that's the probability of x_t given the sequence of sensor observations
+
+48
+00:05:00,340 --> 00:05:05,639
+from time step 1 to time step t is also called the belief.
+
+49
+00:05:05,639 --> 00:05:13,680
+Instead of writing down P(x) given all this sensor input sometimes we just write the belief
+
+50
+00:05:13,680 --> 00:05:21,509
+of x at time step t. And now the Bayes filter algorithm works as
+
+51
+00:05:21,509 --> 00:05:28,789
+follows. We first integrate the motion command that we have issued into our belief and create
+
+52
+00:05:28,789 --> 00:05:36,870
+a second or temporarily belief value Bel bar. And we do that by applying the motion model
+
+53
+00:05:36,870 --> 00:05:42,319
+as before, as we have seen last week. And because we don't really know what the
+
+54
+00:05:42,319 --> 00:05:49,960
+world state is or what the world state was at t-1 we have to integrate or sum up over
+
+55
+00:05:49,960 --> 00:06:00,270
+all possible world states at this time step to make sure that we model the uncertainty that we had
+
+56
+00:06:00,270 --> 00:06:08,599
+in our previous belief correctly. And then, in the second step we update this
+
+57
+00:06:08,599 --> 00:06:17,629
+belief again using the senor model. And as you remember we had this denominator
+
+58
+00:06:17,629 --> 00:06:22,870
+here actually where we had to divide by the prior on sensor measurements, which was hard
+
+59
+00:06:22,870 --> 00:06:29,840
+to compute and so instead we typically just add this normalization constant here that
+
+60
+00:06:29,840 --> 00:06:35,629
+we compute afterwards by making sure that the belief distribution is a proper distribution,
+
+61
+00:06:35,629 --> 00:06:40,440
+which means that it has to sum to 1 at the end of the day.
+
+62
+00:06:40,440 --> 00:06:46,159
+It should be noted here that the Bayes filter also works on continuous states, so in this
+
+63
+00:06:46,159 --> 00:06:52,259
+case you can just replace the sum in this equation by an integral and also the Bayes
+
+64
+00:06:52,259 --> 00:06:59,219
+filter works although we now have here two separate steps.
+
+65
+00:06:59,219 --> 00:07:05,400
+It can also work if you have much more actions for example or if they are not in sync anymore.
+
+66
+00:07:05,400 --> 00:07:11,990
+So you can run these two steps independently depending on how often you get a motion or
+
+67
+00:07:11,990 --> 00:07:21,370
+sensor updates. And now, I thought that it might be very helpful
+
+68
+00:07:21,370 --> 00:07:26,509
+to immediately give a good example or an intuitive example how this could look like.
+
+69
+00:07:26,509 --> 00:07:32,439
+And I do that with the so called histogram filter or grid filter as it is also called.
+
+70
+00:07:32,439 --> 00:07:38,870
+The goal here is that we want to localize a robot that is moving in such a grid world.
+
+71
+00:07:38,870 --> 00:07:47,680
+We represent the world state by a state variable x that has two coordinates, so it is a 2 dimensional
+
+72
+00:07:47,680 --> 00:07:54,819
+state space where the first coordinate reflects the x position and the second coordinate reflects the
+
+73
+00:07:54,819 --> 00:08:01,849
+y position. And we now have a belief distribution that
+
+74
+00:08:01,849 --> 00:08:10,159
+we can visualize here as a grid as well. And the brightness now of every cell encodes
+
+75
+00:08:10,159 --> 00:08:15,860
+how likely it is that the robot is located in one of this cells.
+
+76
+00:08:15,860 --> 00:08:21,099
+And white means that is very unlikely, so a probability of 0.
+
+77
+00:08:21,099 --> 00:08:27,129
+And black would mean absolute certainty that the robot is at a certain place.
+
+78
+00:08:27,129 --> 00:08:31,620
+And now using such a grid we can easily model uncertainty.
+
+79
+00:08:31,620 --> 00:08:35,520
+So for example, if we think that the robot is located here at this grayish cell but it
+
+80
+00:08:35,520 --> 00:08:41,460
+might also be in one of its neighbor cells. Then we can use different shades of gray to
+
+81
+00:08:41,460 --> 00:08:47,430
+indicate this uncertainty. Furthermore, we assume that this robot can
+
+82
+00:08:47,430 --> 00:08:56,350
+move around, it can issue one of four motion commands: it can go north, east, south, west
+
+83
+00:08:56,350 --> 00:09:00,140
+and the robot can move exactly one cell in each time step.
+
+84
+00:09:00,140 --> 00:09:05,910
+And we furthermore assume that the actions are not perfectly executed by sometimes it
+
+85
+00:09:05,910 --> 00:09:10,450
+happens that the robot does not get to where it actually wants to.
+
+86
+00:09:10,450 --> 00:09:18,450
+For example, if it wants to move to the right, even when it was perfectly certain that it
+
+87
+00:09:18,450 --> 00:09:26,530
+was in a certain cell. After issuing this motion command it would only be certain to a certain degree
+
+88
+00:09:26,530 --> 00:09:32,470
+still that it ended up in this right cell and with a smaller possibility it would end
+
+89
+00:09:32,470 --> 00:09:37,490
+up in one of the neighboring cells. So in our model we would say that it has a
+
+90
+00:09:37,490 --> 00:09:44,020
+success rate of 60% to end up in the cell that it wants, and there is a likelihood of
+
+91
+00:09:44,020 --> 00:09:51,330
+10% that it moves to far or to close or it moves one cell up or down.
+
+92
+00:09:51,330 --> 00:09:57,320
+And then we add a special marker to one particular cell.
+
+93
+00:09:57,320 --> 00:10:03,820
+Or we have a special sensor that can sense a marker that is located in one of the cells.
+
+94
+00:10:03,820 --> 00:10:12,160
+And then, the robot while it is going around can sense this marker. You can think of that
+
+95
+00:10:12,160 --> 00:10:20,130
+as for example, this brightness of these lamps from the landing site that we had earlier.
+
+96
+00:10:20,130 --> 00:10:25,440
+And because everything is a bit noisy it might happen that the robot also detects the marker
+
+97
+00:10:25,440 --> 00:10:32,960
+when it is one of the adjacent cells. Now let's do a simulation run, please forgive
+
+98
+00:10:32,960 --> 00:10:36,900
+me that the shades are not perfectly reflecting the likelihoods because everything is hand
+
+99
+00:10:36,900 --> 00:10:43,320
+drawn and not exact, but in the next video when we do the same with the Kalman filter
+
+100
+00:10:43,320 --> 00:10:49,870
+you can see real probabilities being computed by a program.
+
+101
+00:10:49,870 --> 00:10:56,690
+So this is our initial state we assume in this case now that we are perfectly certain
+
+102
+00:10:56,690 --> 00:11:00,600
+of our world state. So we know that the robot is located exactly
+
+103
+00:11:00,600 --> 00:11:11,130
+at this black cell here in the middle. And it now issues a motion command it goes
+
+104
+00:11:11,130 --> 00:11:20,320
+to the east and for that we have to apply the first step of the Bayes filter.
+
+105
+00:11:20,320 --> 00:11:24,760
+So we apply the motion model to our belief state, which means that we take the old belief
+
+106
+00:11:24,760 --> 00:11:32,760
+state as input and convolve it with our motion model. This will then lead to this blurred
+
+107
+00:11:32,760 --> 00:11:37,110
+belief state on the right, where we are pretty certain that we actually moved to the right.
+
+108
+00:11:37,110 --> 00:11:43,350
+But with a small probability it might also have happened that we moved
+
+109
+00:11:43,350 --> 00:11:49,370
+in one of the adjacent cells. Now, we apply the second step of the Bayes
+
+110
+00:11:49,370 --> 00:11:55,170
+filter. We apply the observation model. Our sensor reported that it hasn't detected
+
+111
+00:11:55,170 --> 00:12:04,180
+a marker, so that doesn't change a lot but actually in the cell that is next
+
+112
+00:12:04,180 --> 00:12:12,490
+to the marker actually gets a slightly low probability because we would have expected
+
+113
+00:12:12,490 --> 00:12:16,600
+that if we are close to the marker that there is a certain residual probability that we
+
+114
+00:12:16,600 --> 00:12:24,420
+see this marker also from the adjacent cell. Now we walk again, in the next time step we
+
+115
+00:12:24,420 --> 00:12:31,790
+again walked to the right. So we apply Bayes filter step 1, the motion
+
+116
+00:12:31,790 --> 00:12:37,480
+model. And this shifts the whole probability distribution
+
+117
+00:12:37,480 --> 00:12:44,510
+now a little bit to the right but it again blurs it because our motions are quite inaccurate.
+
+118
+00:12:44,510 --> 00:12:49,310
+And the result is shown in the grid on the right.
+
+119
+00:12:49,310 --> 00:12:57,300
+And now we apply again Bayes filter step 2, we apply the observation model and in this
+
+120
+00:12:57,300 --> 00:13:05,360
+case we now assume that the robot has observed the marker and so we update our current belief
+
+121
+00:13:05,360 --> 00:13:12,530
+using the sensor model. And this then results in the following distribution,
+
+122
+00:13:12,530 --> 00:13:18,870
+so the most likely cell is now one cell to the left of the marker, but there is also
+
+123
+00:13:18,870 --> 00:13:23,840
+a considerable probability mass on the cell with the marker.
+
+124
+00:13:23,840 --> 00:13:28,720
+And now the question would be: what do should the robot think where it is?
+
+125
+00:13:28,720 --> 00:13:34,480
+And now you might be tempted to say: well obviously the darkest cell is the one, left
+
+126
+00:13:34,480 --> 00:13:41,480
+of the marker. But there is actually no easy way of extracting
+
+127
+00:13:41,480 --> 00:13:46,890
+or specifying now the discrete location of the robot.
+
+128
+00:13:46,890 --> 00:13:53,480
+It is a probability distribution, you can always say the most likely cell is the cell left of the
+
+129
+00:13:53,480 --> 00:14:01,000
+marker, but in principle we can't know. It's either somewhere in between these two cells.
+
+130
+00:14:01,000 --> 00:14:05,060
+So to summarize this video, we have introduced
+
+131
+00:14:05,060 --> 00:14:10,570
+the Markov assumption that enables us to run very efficient recursive Bayesian updates
+
+132
+00:14:10,570 --> 00:14:15,550
+on the belief distribution. It's a very useful tool for estimating the state for a dynamic
+
+133
+00:14:15,550 --> 00:14:19,670
+system and it forms the basis of many other filters.
+
+134
+00:14:19,670 --> 00:14:24,430
+In particular the Kalman filter that we will now finally look at in the next video.
+
+135
+00:14:24,430 --> 00:14:30,740
+But also other filters like the particle filter, hidden Markov models, dynamic Bayesian networks,
+
+136
+00:14:30,740 --> 23:59:59,999
+and partially observable Markov decision processes for example and many other tool in statistics.
+

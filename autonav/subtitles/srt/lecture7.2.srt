@@ -1,0 +1,808 @@
+1
+00:00:00,780 --> 00:00:03,679
+Hello and welcome everybody back to lecture video 7.2.
+
+2
+00:00:03,679 --> 00:00:10,360
+In the previous video we have introduced how we can estimate 2D motion in camera images
+
+3
+00:00:10,360 --> 00:00:16,070
+and now in this video we will extend this to allow a quadrotor to estimate its horizontal
+
+4
+00:00:16,070 --> 00:00:19,810
+speed using visual odometry.
+
+5
+00:00:19,810 --> 00:00:28,150
+So as you remember from our lecture on control there are actually several control layers
+
+6
+00:00:28,150 --> 00:00:32,710
+stacked in a quadrotor. So at the lowest level we have this motor
+
+7
+00:00:32,710 --> 00:00:39,570
+speed estimation and the motor speed controller. Then we have an attitude estimation typically
+
+8
+00:00:39,570 --> 00:00:47,399
+using the IMU and gyroscopes. And then, we have an attitude control, for example using
+
+9
+00:00:47,399 --> 00:00:54,600
+a PID controller. And on top of that we have typically a localization module that can be
+
+10
+00:00:54,600 --> 00:01:03,969
+based on a camera for example. And that is then used to support velocity and position control for
+
+11
+00:01:03,969 --> 00:01:10,140
+higher levels of trajectory control for example but also to simplify life for a human pilot.
+
+12
+00:01:10,140 --> 00:01:16,579
+Today we look at this visualization block over there, today we only look at the so
+
+13
+00:01:16,579 --> 00:01:20,460
+called visual odometry problem. But we will then extend this next week to
+
+14
+00:01:20,460 --> 00:01:22,960
+full visual SLAM.
+
+15
+00:01:22,960 --> 00:01:28,159
+So the basic problem here is that the velocity estimates that we are getting here form our
+
+16
+00:01:28,159 --> 00:01:35,909
+IMU are very inaccurate, at least for small UAVs like quadrotors that we are looking at.
+
+17
+00:01:35,909 --> 00:01:42,070
+The problem is that the IMU as you know consists of gyroscopes and accelerometers. And in particular
+
+18
+00:01:42,070 --> 00:01:47,490
+the accelerometer estimate accelerations and if you are integrate accelerations you end
+
+19
+00:01:47,490 --> 00:01:53,380
+up with velocities, and if you integrate it twice then you end up with positions. But
+
+20
+00:01:53,380 --> 00:02:01,939
+any error or noise that you have in your accelerations will end up strong errors in your integrated
+
+21
+00:02:01,939 --> 00:02:05,630
+velocity and even larger errors in your position.
+
+22
+00:02:05,630 --> 00:02:11,420
+And this means that you typically can use the IMU to propagate or estimate your velocity and position
+
+23
+00:02:11,420 --> 00:02:15,730
+for maybe half a second or maybe a few hundred milliseconds.
+
+24
+00:02:15,730 --> 00:02:21,659
+So the question is: how can we get more accurate velocity estimates that are less sensitive
+
+25
+00:02:21,659 --> 00:02:23,959
+to this noise from the IMU?
+
+26
+00:02:23,959 --> 00:02:29,819
+And the constrain of course is that we need to have this estimates in real time because
+
+27
+00:02:29,819 --> 00:02:36,319
+we need them in our control loop immediately and we want to have minimal delay because
+
+28
+00:02:36,319 --> 00:02:39,040
+we need it in control.
+
+29
+00:02:39,040 --> 00:02:47,720
+And the basic idea is now that we have a quadrotor and the quadrotor has a downward looking camera.
+
+30
+00:02:47,720 --> 00:02:53,379
+And from this camera image it tries to track one or more points in the camera image. And
+
+31
+00:02:53,379 --> 00:03:02,290
+from this motion in the image it tries to compute back the motion of the quadrotor in the 3D world.
+
+32
+00:03:02,290 --> 00:03:09,010
+So one first observation here is that if we only use a single monocular camera then we
+
+33
+00:03:09,010 --> 00:03:13,819
+could not determine the absolute speed. And the reason for that is that with just one
+
+34
+00:03:13,819 --> 00:03:24,370
+eye you cannot really tell how far the world is away or how large the world is, so the same motion in a 2D image could
+
+35
+00:03:24,370 --> 00:03:30,599
+correspond to different distances in the real world depending on your flying height.
+
+36
+00:03:30,599 --> 00:03:37,159
+And this actually means that we need additional sensors and the common choice is then to use
+
+37
+00:03:37,159 --> 00:03:44,950
+first of all the IMU because we have that anyway. This will give us the absolute orientation
+
+38
+00:03:44,950 --> 00:03:51,019
+of our quadrotor. Typically there is also a height sensor being used that gives us then
+
+39
+00:03:51,019 --> 00:03:56,390
+the absolute scale of the world. For that you can for example use ultrasound as is used
+
+40
+00:03:56,390 --> 00:04:04,569
+in the Parrot ArDrone or you can use a pressure sensor since changes in pressure also correspond
+
+41
+00:04:04,569 --> 00:04:07,819
+to changes in height.
+
+42
+00:04:07,819 --> 00:04:13,939
+And one strong assumption which is typically made with this visually odometry sensors that we look at in
+
+43
+00:04:13,939 --> 00:04:18,858
+this video is that we assume a planar floor. This is strictly speaking not necessary we
+
+44
+00:04:18,858 --> 00:04:23,500
+will later see how we can relax this assumption but for the moment we assume that we are looking
+
+45
+00:04:23,500 --> 00:04:26,800
+at a perfectly planar floor.
+
+46
+00:04:26,800 --> 00:04:32,770
+So here are again our assumptions. For the moment we assume that we have a camera that's
+
+47
+00:04:32,770 --> 00:04:38,740
+perpendicular looking onto a planar ground. And furthermore, we assume that we know our
+
+48
+00:04:38,740 --> 00:04:43,690
+flying height for example from ultrasound sensors or from somewhere else.
+
+49
+00:04:43,690 --> 00:04:49,699
+And then, we have a camera images and we look at a particular point, say here for example
+
+50
+00:04:49,699 --> 00:04:56,220
+this point exactly in the center of the image and we try to track it as the quadrotor moves.
+
+51
+00:04:56,220 --> 00:05:01,789
+So for example, in the next image the quadrotor has moved a little bit now to the right. It
+
+52
+00:05:01,789 --> 00:05:07,560
+still keeps tracking this point that was previously located in the center of the image. Now it
+
+53
+00:05:07,560 --> 00:05:14,020
+is shifted slightly to the left with respect to the new camera coordinates.
+
+54
+00:05:14,020 --> 00:05:21,880
+And this point in the world is now imaged onto the image plane. And this is what we
+
+55
+00:05:21,880 --> 00:05:27,889
+get out of the 2D motion estimation of the image. So we make an observation in the image
+
+56
+00:05:27,889 --> 00:05:35,919
+that this point has shifted by a certain number of pixels u and v. And of course, there is
+
+57
+00:05:35,919 --> 00:05:41,330
+now a relationship between these point in 2D and the point in the real world in 3D,
+
+58
+00:05:41,330 --> 00:05:45,930
+and this is given by this equation here in the middle.
+
+59
+00:05:45,930 --> 00:05:53,860
+x tilde equals K, where K is the intrinsic matrix of our camera, times our 3D point.
+
+60
+00:05:53,860 --> 00:05:59,680
+And this 3D to 2D projection of course goes now in the wrong direction because we want
+
+61
+00:05:59,680 --> 00:06:08,870
+to know the point p but we know x tilde. Remember that this tilde means that this entity
+
+62
+00:06:08,870 --> 00:06:16,599
+is a homogeneous vector, so it contains our image coordinates u and v but it might be
+
+63
+00:06:16,599 --> 00:06:24,830
+scaled up arbitrarily by a factor lambda and this homogeneous coordinates now equals the
+
+64
+00:06:24,830 --> 00:06:30,949
+product of the intrinsic matrix times our 3D point. And if you look carefully you can
+
+65
+00:06:30,949 --> 00:06:38,889
+see that if you only look at the last column it says that lambda equals Z, so you can identify
+
+66
+00:06:38,889 --> 00:06:44,919
+lambda here with Z now and then solve for p.
+
+67
+00:06:44,919 --> 00:06:50,650
+So we can just do that by multiplying by K^(-1) on both sides of the equation and then we
+
+68
+00:06:50,650 --> 00:06:57,210
+end up with a very simple expression and we can directly read of the motion in X and Y
+
+69
+00:06:57,210 --> 00:07:00,840
+direction in world coordinates.
+
+70
+00:07:00,840 --> 00:07:05,370
+Of course the quadrotor is not as friendly and is always looking downwards perpendicular
+
+71
+00:07:05,370 --> 00:07:13,770
+to the floor, but of course the quadrotor tilts a lot during flight. So this means that the
+
+72
+00:07:13,770 --> 00:07:20,639
+second image might be tilted slightly but we still assume that it is tracking this point
+
+73
+00:07:20,639 --> 00:07:26,979
+that we're looking at in the first frame. And now, because we have this IMU onboard
+
+74
+00:07:26,979 --> 00:07:32,819
+we actually know the amount of rotation, the relative rotation between these two camera
+
+75
+00:07:32,819 --> 00:07:40,169
+frames and this actually allows us to derotate this camera, to create a virtual camera that is located at the
+
+76
+00:07:40,169 --> 00:07:45,690
+same spot in the world but it is looking perpendicular to the floor again.
+
+77
+00:07:45,690 --> 00:07:52,430
+And there is a very easy relationship now between the point that the tilted camera observed
+
+78
+00:07:52,430 --> 00:07:57,460
+and the point that would appear in this derotated virtual camera.
+
+79
+00:07:57,460 --> 00:08:03,720
+So because if we know this rotation R from our IMU we can just multiply this rotation
+
+80
+00:08:03,720 --> 00:08:14,360
+by this observed point p in the tilted camera frame and this gives us the point p prime
+
+81
+00:08:14,360 --> 00:08:18,080
+that is now expressed in this perpendicular camera.
+
+82
+00:08:18,080 --> 00:08:23,789
+And this means now that for this virtual camera we again have the situation from the last
+
+83
+00:08:23,789 --> 00:08:30,250
+slide where we just had a pure translation and now we can fill in that into our equation
+
+84
+00:08:30,250 --> 00:08:39,419
+as before, so now we are getting the X and Y motion just by derotating it by R^(-1) as
+
+85
+00:08:39,419 --> 00:08:45,320
+you know which is exactly the same as R transposed times the inverse of the intrinsic
+
+86
+00:08:45,320 --> 00:08:50,600
+matrix times Z times the homogeneous vector u, v, 1.
+
+87
+00:08:50,600 --> 00:08:58,450
+So of course the quadrotor not only flies in one plane it also changes its flying height.
+
+88
+00:08:58,450 --> 00:09:02,790
+And then, let's look at what this actually means. So if the quadrotor is now changing
+
+89
+00:09:02,790 --> 00:09:10,100
+its height but still keeping track of the same point, then this point appears at different
+
+90
+00:09:10,100 --> 00:09:22,160
+locations in the image plane. The higher the quadrotor flies the smaller the world appears, and so the smaller this shift in
+
+91
+00:09:22,160 --> 00:09:28,080
+the image plain becomes. So you see from this catch here that the pixel coordinate actually
+
+92
+00:09:28,080 --> 00:09:35,400
+gets scaled by the ratio of the two flying heights. So now we not only need the flying
+
+93
+00:09:35,400 --> 00:09:41,700
+height from the first camera but we also need to know the flying height of the second camera.
+
+94
+00:09:41,700 --> 00:09:44,910
+But if we know that we can again create a virtual
+
+95
+00:09:44,910 --> 00:09:52,220
+observation x prime where we scale the two pixel observations u and v by this factor.
+
+96
+00:09:52,220 --> 00:09:57,810
+And then again, we can plug that into our previous equation that we had. And this
+
+97
+00:09:57,810 --> 00:10:06,810
+now gives us the full formula how we come from pixel 2D motion estimates in the image
+
+98
+00:10:06,810 --> 00:10:12,880
+plane to 2D velocities in the real world.
+
+99
+00:10:12,880 --> 00:10:17,770
+So far we only tracked a single point now for illustration, but of course it is clear
+
+100
+00:10:17,770 --> 00:10:24,190
+that if you only look at a single point then you are quit sensitive to noise and outliers
+
+101
+00:10:24,190 --> 00:10:32,190
+and of course the accuracy and the robustness can be increased greatly if you not only track a single point, but a whole
+
+102
+00:10:32,190 --> 00:10:38,030
+bunch of them. For example the PX4FLOW sensor at which we will look at in a second actually
+
+103
+00:10:38,030 --> 00:10:44,790
+tracks an array of 4 by 4 points in the image and it runs the majority vote algorithm sample
+
+104
+00:10:44,790 --> 00:10:51,050
+consensus methods like RANSAC to find the motion hypothesis that has the largest
+
+105
+00:10:51,050 --> 00:10:56,080
+support from all the points.
+
+106
+00:10:56,080 --> 00:11:05,310
+Now two hardware implementations examples, you know the Parrot ArDrone of course and
+
+107
+00:11:05,310 --> 00:11:10,820
+the main board and navigation board together form such a visual odometry sensor. There
+
+108
+00:11:10,820 --> 00:11:15,980
+is a downward looking camera, there is an IMU, an ultrasound sensor to determine the absolute
+
+109
+00:11:15,980 --> 00:11:25,070
+flying height, and a pressure sensor that the ArDrone can use when it flies higher than 5 meters,
+
+110
+00:11:25,070 --> 00:11:28,640
+because the ultrasound sensor only works up to a certain height of course because at some
+
+111
+00:11:28,640 --> 00:11:35,480
+point you don't hear your own echo anymore. But this is only needed for larger flying
+
+112
+00:11:35,480 --> 00:11:39,560
+heights if you're going outdoors.
+
+113
+00:11:39,560 --> 00:11:44,460
+Pressure indoors is difficult because as soon as somebody opens the window or a door then
+
+114
+00:11:44,460 --> 00:11:50,340
+your pressure changes and so it's not really informative.
+
+115
+00:11:50,340 --> 00:11:57,450
+One disadvantage of the Parrot board is that
+
+116
+00:11:57,450 --> 00:12:01,750
+it is closed source, so we do not really know what's going on in there. There is actually
+
+117
+00:12:01,750 --> 00:12:08,040
+one research paper that you can read but it doesn't go too much into details and there
+
+118
+00:12:08,040 --> 00:12:12,480
+is no code available. In contrast people from ETH, from Marc Pollefeys
+
+119
+00:12:12,480 --> 00:12:17,370
+group actually developed this Px4Flow sensor and released it as open source and
+
+120
+00:12:17,370 --> 00:12:23,820
+open hardware, so you can buy it preassembled but you can also look at the software there
+
+121
+00:12:23,820 --> 00:12:28,080
+and of that we know much better how it works and what its properties are.
+
+122
+00:12:28,080 --> 00:12:33,790
+So let's look at that in a little more detail. It's a so called smart camera module it combines
+
+123
+00:12:33,790 --> 00:12:43,190
+a camera with a processor. And this camera can run at reasonable resolution, but of course
+
+124
+00:12:43,190 --> 00:12:49,290
+for our application it is desirable that it runs at a really high frame rate. This one
+
+125
+00:12:49,290 --> 00:12:56,930
+can run at 250 frames per second and you still get a reasonably high resolution image. It
+
+126
+00:12:56,930 --> 00:13:03,230
+also has a zoom lens on it which means that the opening angle is quit narrow. This has
+
+127
+00:13:03,230 --> 00:13:08,140
+the advantage that we're then looking at a, so we made this assumption that the floor
+
+128
+00:13:08,140 --> 00:13:12,630
+is planar and of course if you have a wide angle camera then we see all kinds of things
+
+129
+00:13:12,630 --> 00:13:16,960
+including the walls and maybe objects and persons walking around.
+
+130
+00:13:16,960 --> 00:13:22,860
+So it's an advantage to have a zoom lens because then you are focusing on a small patch of
+
+131
+00:13:22,860 --> 00:13:30,070
+the world and then the likelihood at this patch actually is planar and much larger.
+
+132
+00:13:30,070 --> 00:13:38,510
+And then, there is also a processor that runs at 168 megahertz so this is quite something.
+
+133
+00:13:38,510 --> 00:13:43,190
+It even can do a single precision floating point operations and as I said the software
+
+134
+00:13:43,190 --> 00:13:47,510
+on this processor is open source so you can download it have a look at it, even potentially
+
+135
+00:13:47,510 --> 00:13:53,230
+modify it or replace it by your own implementation. Furthermore, there is a gyroscope on board
+
+136
+00:13:53,230 --> 00:14:02,470
+that we need to estimate the rotation change. There is also accelerometer integrated and
+
+137
+00:14:02,470 --> 00:14:07,630
+there is an ultrasound sensor. As you can see here this is actually a sender and receiver
+
+138
+00:14:07,630 --> 00:14:13,220
+in one module. So the Parrot ArDrone has a separate sender and receiver and this module
+
+139
+00:14:13,220 --> 00:14:19,850
+has here both integrated in the same thing. And this sensor does everything that we need,
+
+140
+00:14:19,850 --> 00:14:27,840
+it directly outputs the x and y speed over a serial link. It also outputs the gyroscope
+
+141
+00:14:27,840 --> 00:14:33,710
+information so you can use that as well in the Kalman Filter and use that for position
+
+142
+00:14:33,710 --> 00:14:35,020
+control.
+
+143
+00:14:35,020 --> 00:14:40,190
+So this is now a demo that shows how this looks like. This is a modified Parrot ArDrone
+
+144
+00:14:40,190 --> 00:14:45,840
+it's just the hardware left and the motor controller and everything else got replaced
+
+145
+00:14:45,840 --> 00:14:54,420
+the authors and now this visual odometry sensor is running there it's looking downwards here
+
+146
+00:14:54,420 --> 00:14:59,560
+Domenik Honegger who's the remote controls but he is not touching any controls and still
+
+147
+00:14:59,560 --> 00:15:04,330
+the quadrotor is keeping its position. And now the cool thing is that you can directly
+
+148
+00:15:04,330 --> 00:15:09,880
+control the speeds, absolute speeds in the world coordinate frame. So you can control
+
+149
+00:15:09,880 --> 00:15:17,630
+that the ArDrone goes up and down and he can command that the ArDrone goes forward and
+
+150
+00:15:17,630 --> 00:15:26,980
+backward, and left and right. And for that it is just using this visual odometry sensor with its downward looking camera.
+
+151
+00:15:26,980 --> 00:15:32,250
+And the cool thing of course is that if you have visual odometry then it greatly simplifies
+
+152
+00:15:32,250 --> 00:15:37,870
+the navigation task for the pilot because you don't need to worry about compensating
+
+153
+00:15:37,870 --> 00:15:47,080
+for disturbances the quadrotor will stay in place whenever you leave it and so on and so on.
+
+154
+00:15:47,080 --> 00:15:54,800
+Here is another video that demos that the ArDrone is rock-solid standing in the air,
+
+155
+00:15:54,800 --> 00:15:59,620
+it doesn't need any markers on the floor, a little bit texture is enough but most floor
+
+156
+00:15:59,620 --> 00:16:08,220
+actually have that and you can also see the whole electronics that got added to the ArDrone.
+
+157
+00:16:08,220 --> 00:16:16,880
+It's not only this optical flow sensor but also a different autopilot.
+
+158
+00:16:16,880 --> 00:16:26,080
+This is now another quadrotor you can also see the sensor works there and here you can
+
+159
+00:16:26,080 --> 00:16:30,200
+see that it works outdoors.
+
+160
+00:16:30,200 --> 00:16:39,140
+They also ran some evaluation here, so visual odometry by itself is still problem to drift
+
+161
+00:16:39,140 --> 00:16:44,360
+but it drifts much less than the IMU. But nevertheless it's of course interesting how
+
+162
+00:16:44,360 --> 00:16:51,070
+large this drift is and to illustrate that there is quite a little drift they run the following
+
+163
+00:16:51,070 --> 00:17:00,380
+experiment. They went outdoors and walked through the University Park at the ETH with
+
+164
+00:17:00,380 --> 00:17:08,180
+a relatively low flying height, manual control, and then, they were manually flying this quadrotor that
+
+165
+00:17:08,180 --> 00:17:14,160
+was carrying this PX4FLOW sensor and they were just integrating up the position estimates
+
+166
+00:17:14,160 --> 00:17:23,670
+from the sensor and it's important to note that there was no GPS involved. So the trajectory
+
+167
+00:17:23,670 --> 00:17:30,740
+they got out of that they overlaid this to this aerial image from Google Maps and then
+
+168
+00:17:30,740 --> 00:17:39,920
+you can see that this trajectory matches nicely the foot path on the campus. And this is a
+
+169
+00:17:39,920 --> 00:17:43,960
+good indication that actually the sensor provides reasonable vuisual odometry.
+
+170
+00:17:43,960 --> 00:17:50,600
+I should mention that there are also alternatively methods to compute visual odometry from different
+
+171
+00:17:50,600 --> 00:17:58,110
+sensor setups. For example, there is the possibility to use a stereo camera or a depth sensor like
+
+172
+00:17:58,110 --> 00:18:04,780
+Kinect, we will look at a direct visual odometry method for that next week. But there is also
+
+173
+00:18:04,780 --> 00:18:11,200
+the possibility to use a wide angle lens and an IMU and not to use any ultrasound sensor
+
+174
+00:18:11,200 --> 00:18:16,230
+but to use the IMU directly to estimate the scale.
+
+175
+00:18:16,230 --> 00:18:23,140
+So and this was actually implemented by Stefan Weiss from Roland Siegwarts group at the
+
+176
+00:18:23,140 --> 00:18:30,180
+ETH. The idea there is to use PTAM which is a monocular visual SLAM library from Klein
+
+177
+00:18:30,180 --> 00:18:40,750
+and Murray presented at ISMAR 2007. It builds a sparse 3D map from visual features so it
+
+178
+00:18:40,750 --> 00:18:46,890
+runs something similar to this KLT tracker which you have seen before, but then it additionally
+
+179
+00:18:46,890 --> 00:18:53,230
+estimates the 3D position of every feature in the world and uses that again to compute
+
+180
+00:18:53,230 --> 00:18:59,520
+the tracked camera pose in the world. The problem with the visual SLAM in general
+
+181
+00:18:59,520 --> 00:19:06,040
+is that it gets slower and slower the more key frames you add and so the idea of Stefan
+
+182
+00:19:06,040 --> 00:19:13,810
+Weiss was to drop old key frames to have a limited or a fixed number of key frames in
+
+183
+00:19:13,810 --> 00:19:17,380
+your buffer to keep the computation time actually constant.
+
+184
+00:19:17,380 --> 00:19:21,450
+With that you can guarantee that you can compute the visual odometry at a reasonable frame
+
+185
+00:19:21,450 --> 00:19:28,370
+rate of 30 Hertz or around that. And then as I said, they also use the IMU
+
+186
+00:19:28,370 --> 00:19:35,050
+then to estimate the scale. This is also viable and possible it's a bit noisier than if you
+
+187
+00:19:35,050 --> 00:19:43,090
+directly get your height estimates from ultrasound sensors but it's nevertheless possible and
+
+188
+00:19:43,090 --> 00:19:45,370
+you need less hardware.
+
+189
+00:19:45,370 --> 00:19:54,640
+So this video demos that in principle now. This was recorded in MoCap area from
+
+190
+00:19:54,640 --> 00:20:00,990
+Raffaello d'Andrea at ETH. You can see here that the quadrotor is flying small rectangle
+
+191
+00:20:00,990 --> 00:20:08,540
+and it's using this visual odometry method here and it spits out the position estimates
+
+192
+00:20:08,540 --> 00:20:13,640
+here on the right, and you can see that sometimes there is a little bit of noise especially
+
+193
+00:20:13,640 --> 00:20:22,810
+when the quadrotor shakes a lot. Nevertheless you can recognize this rectangle that it flew
+
+194
+00:20:22,810 --> 00:20:29,680
+and in this way you can do position control and stabilize your flight.
+
+195
+00:20:29,680 --> 00:20:34,440
+So to summarize the video of today, we've looked at visual odometry methods for UAVs.
+
+196
+00:20:34,440 --> 00:20:41,610
+We've introduced one particular sensor setups that is used quite frequently in more detail and introduced
+
+197
+00:20:41,610 --> 00:20:46,130
+the basic algorithm, and we've also briefly looked in alternative methods for computing visual
+
+198
+00:20:46,130 --> 00:20:50,240
+odometry that are also used a lot on quadrotors.
+
+199
+00:20:50,240 --> 00:20:55,500
+Next week is our last week actually. And there we will in particularly present the cutting
+
+200
+00:20:55,500 --> 00:21:02,900
+edge research results from our group. So we will show some very exiting research work
+
+201
+00:21:02,900 --> 00:21:10,650
+that we have done over the past years. And as far as possible I also point you initial
+
+202
+00:21:10,650 --> 23:59:59,999
+references then in case that you want to extend upon this work.
+

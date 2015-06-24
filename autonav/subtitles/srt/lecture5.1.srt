@@ -1,0 +1,396 @@
+1
+00:00:00,930 --> 00:00:04,420
+Hello and welcome everybody to lecture 5.1.
+
+2
+00:00:04,420 --> 00:00:09,100
+This week we will look at the problem of state estimation.
+
+3
+00:00:09,100 --> 00:00:13,890
+And this will actually keep us busy for the next two weeks because next week then we will
+
+4
+00:00:13,890 --> 00:00:21,430
+use the basics that we introduce this week to introduce the Kalman Filter. And then show
+
+5
+00:00:21,430 --> 00:00:27,600
+how we can use that to estimate the pose of a quadrotor even from noisy measurements,
+
+6
+00:00:27,600 --> 00:00:32,700
+such as visual odometry or GPS.
+
+7
+00:00:32,700 --> 00:00:38,100
+So before we dive more into the technical problems I first want to clarify a few terms.
+
+8
+00:00:38,100 --> 00:00:45,800
+As you know from last week we can describe the state of our system with a variable, which
+
+9
+00:00:45,800 --> 00:00:51,800
+is then typically referred as the system state or the world state.
+
+10
+00:00:51,800 --> 00:00:58,000
+This world state represents then the current state of the system. So for example, if we
+
+11
+00:00:58,000 --> 00:01:03,800
+have a quadrotor flying in a 3D world we could describe its state using a 3 dimensional vector
+
+12
+00:01:03,800 --> 00:01:07,470
+describing its position. If it's hovering above a landing site at the
+
+13
+00:01:07,470 --> 00:01:12,800
+same time we could also depending on the task that we are looking at, we could also model
+
+14
+00:01:12,800 --> 00:01:19,500
+its relative position to this landing site or the position of this landing site in the world
+
+15
+00:01:19,500 --> 00:01:21,619
+and the quadrotor in the world.
+
+16
+00:01:21,619 --> 00:01:27,700
+So when we talk about the world state then we mean the actual state of the world,
+
+17
+00:01:27,700 --> 00:01:32,200
+the actual position of the quadrotor in the world.
+
+18
+00:01:32,200 --> 00:01:38,159
+Of course, we need an internal representation then of this world state because we need this
+
+19
+00:01:38,159 --> 00:01:42,280
+world state for applying our PID-controller for example.
+
+20
+00:01:42,280 --> 00:01:48,170
+And this is then called the belief state, which is the internal representation of this
+
+21
+00:01:48,170 --> 00:01:52,049
+world state. And it is important to note here that this
+
+22
+00:01:52,049 --> 00:01:57,829
+belief state does not necessarily have to match the real world state.
+
+23
+00:01:57,829 --> 00:02:07,040
+Because as you know, all sensors or all observations that we can make are noisy, so it's not guaranteed that
+
+24
+00:02:07,040 --> 00:02:13,209
+what the robot actually thinks where it is, is actually where it really is.
+
+25
+00:02:13,209 --> 00:02:17,669
+So we have already discussed this a little bit. The question then of course is: what
+
+26
+00:02:17,669 --> 00:02:22,800
+are the relevant parts of the world state that we really need to model? And that depends
+
+27
+00:02:22,800 --> 00:02:28,980
+to a great deal of course on the task attend that we try to solve.
+
+28
+00:02:28,980 --> 00:02:34,400
+So for a quadrotor in general it's of course very important that we know its position in the world,
+
+29
+00:02:34,400 --> 00:02:41,500
+and then, typically this is somewhere between the 2 dimensional position or a 3 dimensional
+
+30
+00:02:41,500 --> 00:02:46,540
+position or maybe even a 6 degree of freedom pose in 3D space.
+
+31
+00:02:46,540 --> 00:02:53,900
+We're generally also interested in the velocity. We need  that remember for the derivative part in the PID-controller.
+
+32
+00:02:53,900 --> 00:03:00,900
+We might also be interested if we are flying through the world, of course we want to know where the obstacles are.
+
+33
+00:03:00,900 --> 00:03:05,100
+Maybe if we need to do path planning we also need the map.
+
+34
+00:03:05,100 --> 00:03:09,809
+And then, all of these components actually are part of the world state and need to be
+
+35
+00:03:09,809 --> 00:03:17,500
+represented somehow, both by the world state but also in our belief state of the world state.
+
+36
+00:03:17,500 --> 00:03:26,900
+There might be other things, like other objects in the world that we might interested in, like humans for
+
+37
+00:03:26,900 --> 00:03:33,879
+example or other robots if the quadrotor is exploring an environment in a swarm.
+
+38
+00:03:33,879 --> 00:03:37,700
+And as I said, depending on the application that you are looking at, there might be much more things
+
+39
+00:03:37,700 --> 00:03:42,199
+that you might have to represent in your world.
+
+40
+00:03:42,199 --> 00:03:50,059
+The problem with that in general is that without sensors we cannot directly observe the world
+
+41
+00:03:50,059 --> 00:03:54,979
+state although we need it. So we need to estimate it somehow.
+
+42
+00:03:54,979 --> 00:04:00,200
+And there are two sources of information generally on a robot. The first one is that we carry
+
+43
+00:04:00,200 --> 00:04:06,329
+along a large number of sensors of course, so we can try to infer the world state form
+
+44
+00:04:06,329 --> 00:04:14,569
+sensor readings. The second option is that we know which actions that we sent to our
+
+45
+00:04:14,569 --> 00:04:23,800
+motors. So we can use that to compute an odometry for example, as we have already done.
+
+46
+00:04:23,800 --> 00:04:29,439
+So from the actions that we have given to the robot we can then infer the world state.
+
+47
+00:04:29,439 --> 00:04:34,700
+Ideally of course you would use both, the sensor observations and the issued motion commands
+
+48
+00:04:34,700 --> 00:04:38,250
+that you have send to the motors.
+
+49
+00:04:38,250 --> 00:04:46,360
+So let's first start with the sensor model. As we have said, the robot perceives its environment
+
+50
+00:04:46,360 --> 00:04:50,110
+and the world state through its sensors.
+
+51
+00:04:50,110 --> 00:04:55,300
+And this is typically modeled using a so called sensor functions. A sensor function takes
+
+52
+00:04:55,300 --> 00:04:59,810
+the world state as input and then generates a sensor reading. In practice of course this
+
+53
+00:04:59,810 --> 00:05:06,340
+is then implemented in hardware because you have a real sensor that you apply to the real
+
+54
+00:05:06,340 --> 00:05:09,100
+world, and then, it spits out a sensor reading.
+
+55
+00:05:09,100 --> 00:05:18,490
+And then, our goal is to invert this process and to infer the state of the world from
+
+56
+00:05:18,490 --> 00:05:24,689
+the sensor readings that we made using the sensor.
+
+57
+00:05:24,689 --> 00:05:30,740
+Similarly, we can define something similar for the motion model. So imagine that we have
+
+58
+00:05:30,740 --> 00:05:36,289
+executed a certain action or given a certain control command u to our robot for example
+
+59
+00:05:36,289 --> 00:05:40,700
+that we wanted to move forward at a certain speed.
+
+60
+00:05:40,700 --> 00:05:48,229
+Then we can update our belief state about the world state according to a particular
+
+61
+00:05:48,229 --> 00:05:55,139
+motion model. For example, given the previous state and the executed action we can then
+
+62
+00:05:55,139 --> 00:06:03,159
+compute what the most likely state will be where we are in.
+
+63
+00:06:03,159 --> 00:06:08,860
+And the problem here in general is that all sensor observations that we are getting are
+
+64
+00:06:08,860 --> 00:06:17,020
+noisy or potentially missing or partially observed the world state. And so it's not
+
+65
+00:06:17,020 --> 00:06:22,289
+easy to infer from the sensors observations directly the world state.
+
+66
+00:06:22,289 --> 00:06:27,780
+The second problem is that all models that we can think of and that we can specify
+
+67
+00:06:27,780 --> 00:06:36,460
+are partially wrong by definition because a model can only be specific up to a certain
+
+68
+00:06:36,460 --> 00:06:39,099
+degree. And they will also be incomplete because there
+
+69
+00:06:39,099 --> 00:06:43,469
+are some effects that you cannot model or that you don't want to model because it would make
+
+70
+00:06:43,469 --> 00:06:46,310
+your model to complicated.
+
+71
+00:06:46,310 --> 00:06:52,879
+And as a last point, we have typically some prior knowledge about the application in general
+
+72
+00:06:52,879 --> 00:06:57,710
+or how the environment looks like or how the robot behaves.
+
+73
+00:06:57,710 --> 00:07:04,800
+And this is something that we want to include of course in our inference process.
+
+74
+00:07:04,800 --> 00:07:11,500
+And this all together now leads to the so called probabilistic robotics paradigm,
+
+75
+00:07:11,500 --> 00:07:17,090
+where we say that we cannot be absolutely sure of any of these variables,
+
+76
+00:07:17,090 --> 00:07:24,000
+but what we can do is to specify probabilistic models to describe it. So for example, instead
+
+77
+00:07:24,000 --> 00:07:30,800
+of having this deterministic sensor function that maps the world to a one sensor reading
+
+78
+00:07:30,800 --> 00:07:36,189
+we introduce a probabilistic sensor model that defines a probability distribution over
+
+79
+00:07:36,189 --> 00:07:40,620
+possible sensor readings given a particular world state.
+
+80
+00:07:40,620 --> 00:07:45,600
+Similarly we can define a probabilistic motion model then that says when we are in
+
+81
+00:07:45,600 --> 00:07:53,300
+a certain state and we give a certain motion command that there is a certain probability of possible outcomes
+
+82
+00:07:53,300 --> 00:08:00,000
+or the pobability distribution over the possible outcomes then of this action.
+
+83
+00:08:00,000 --> 00:08:07,770
+And then we have to look at two inference problems, namely first of all we want to fuse data
+
+84
+00:08:07,770 --> 00:08:13,789
+between multiple sensor sources. For example, if we have a camera that provides us some readings
+
+85
+00:08:13,789 --> 00:08:18,349
+and we have an ultrasound sensor and an IMU sensor. And we want to combine all of these sensor
+
+86
+00:08:18,349 --> 00:08:24,370
+observations into a single estimate of the world state. And then, we're not only making
+
+87
+00:08:24,370 --> 00:08:31,189
+a single observation of a sensor but of course we get continuously sensor readings from these
+
+88
+00:08:31,189 --> 00:08:36,100
+sensor so we want to fuse it over time, this is then called filtering.
+
+89
+00:08:36,100 --> 00:08:43,000
+And then, the Kalman Filter at that we look at next week is a very efficient variant of
+
+90
+00:08:43,000 --> 00:08:50,200
+a filter to do that. And this could for example just be based on the sensor readings that
+
+91
+00:08:50,200 --> 00:08:56,040
+we getting. But as we said before, ideally we want to fuse the data both, from our sensors
+
+92
+00:08:56,040 --> 00:09:06,610
+encoded by z_1 to z_t and our motion commands that we gave in between, here denoted by u_1 to u_t.
+
+93
+00:09:06,610 --> 00:09:10,500
+So to summarize this: We have introduced the concepts of the world
+
+94
+00:09:10,500 --> 00:09:15,100
+state in the real world, and then, the internal belief state of the  robot.
+
+95
+00:09:15,100 --> 00:09:18,760
+We've looked at sensor models and motion models.
+
+96
+00:09:18,760 --> 00:09:25,200
+And we motivated why we need probability theory then to model the uncertainty that arises
+
+97
+00:09:25,200 --> 00:09:27,610
+from different sources.
+
+98
+00:09:27,610 --> 00:09:35,000
+And then, in the next video we will give a brief recap on probability theory just as
+
+99
+00:09:35,000 --> 23:59:59,999
+a refresher that all of us are on the same page.
+

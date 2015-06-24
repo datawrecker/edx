@@ -1,0 +1,826 @@
+1
+00:00:00,000 --> 00:00:01,001
+
+2
+00:00:01,001 --> 00:00:01,500
+Hello.
+
+3
+00:00:01,500 --> 00:00:03,791
+And welcome back to the third part of the first lecture
+
+4
+00:00:03,791 --> 00:00:06,560
+on autonomous navigation for flying robots.
+
+5
+00:00:06,560 --> 00:00:08,550
+In this video, I will explain what
+
+6
+00:00:08,550 --> 00:00:11,600
+it is that makes a quadrotor hover at a certain position,
+
+7
+00:00:11,600 --> 00:00:14,070
+and what motion commands you have to give to the motors
+
+8
+00:00:14,070 --> 00:00:16,600
+to make it move in a particular direction.
+
+9
+00:00:16,600 --> 00:00:19,520
+So as you know, a quadrotor consists of four rotor blades.
+
+10
+00:00:19,520 --> 00:00:21,280
+And each of these rotors actually
+
+11
+00:00:21,280 --> 00:00:26,650
+produces a certain air flow and in turn an acceleration force
+
+12
+00:00:26,650 --> 00:00:28,630
+onto the body of the quadrotor.
+
+13
+00:00:28,630 --> 00:00:35,630
+And so if you fire up all the four motors at a certain speed,
+
+14
+00:00:35,630 --> 00:00:40,010
+then you can take off.
+
+15
+00:00:40,010 --> 00:00:42,580
+And if the thrust of all the four motors
+
+16
+00:00:42,580 --> 00:00:45,890
+combined together exactly compensates for earth gravity,
+
+17
+00:00:45,890 --> 00:00:50,734
+than the quadrotor will vertically stay in place.
+
+18
+00:00:50,734 --> 00:00:52,650
+The second thing is that you have to make sure
+
+19
+00:00:52,650 --> 00:00:57,300
+that the torques of all the four motors sum exactly to zero,
+
+20
+00:00:57,300 --> 00:01:00,115
+because if you're not doing that, if say all the four
+
+21
+00:01:00,115 --> 00:01:02,130
+rotors would rotate in the same direction,
+
+22
+00:01:02,130 --> 00:01:06,230
+then that would induce a contour-torque that would start
+
+23
+00:01:06,230 --> 00:01:13,314
+to rotate the quadrotor around it's yaw axis.
+
+24
+00:01:13,314 --> 00:01:14,730
+And this is physically implemented
+
+25
+00:01:14,730 --> 00:01:16,250
+as follows on a quadrotor.
+
+26
+00:01:16,250 --> 00:01:21,190
+You always have two motors, the opposing motors mounted
+
+27
+00:01:21,190 --> 00:01:24,540
+on the same arm that are rotating in the same direction,
+
+28
+00:01:24,540 --> 00:01:30,350
+and two rotors, the other two motors rotate
+
+29
+00:01:30,350 --> 00:01:31,627
+in the opposite direction.
+
+30
+00:01:31,627 --> 00:01:33,710
+And in this way, the torque of all the four rotors
+
+31
+00:01:33,710 --> 00:01:37,480
+sums to zero while the trust compensates for earth gravity
+
+32
+00:01:37,480 --> 00:01:40,570
+in hovering mode.
+
+33
+00:01:40,570 --> 00:01:46,070
+Now for ascending, you can just increase equally the speed
+
+34
+00:01:46,070 --> 00:01:49,730
+of all four motors and it will slowly move up your quadrotor.
+
+35
+00:01:49,730 --> 00:01:53,590
+On the other hand, if you reduce the speed equally of all four
+
+36
+00:01:53,590 --> 00:01:56,340
+motors, then you will reduce the overall thrust.
+
+37
+00:01:56,340 --> 00:01:58,420
+And that will bring down your quadrotor again.
+
+38
+00:01:58,420 --> 00:02:01,040
+
+39
+00:02:01,040 --> 00:02:04,545
+Now as I said, for keeping the orientation,
+
+40
+00:02:04,545 --> 00:02:07,440
+it is important that the torques of all four motors
+
+41
+00:02:07,440 --> 00:02:09,075
+sum exactly to zero.
+
+42
+00:02:09,075 --> 00:02:11,009
+However, you can also use this principle
+
+43
+00:02:11,009 --> 00:02:12,930
+for inducing a certain rotation.
+
+44
+00:02:12,930 --> 00:02:16,000
+For example, if you want to make the quadrotor turn to the left,
+
+45
+00:02:16,000 --> 00:02:22,310
+you would increase the speed of the clockwise motors,
+
+46
+00:02:22,310 --> 00:02:26,720
+the right-turning quadrotors, that will then
+
+47
+00:02:26,720 --> 00:02:29,840
+lead to an induction of a torque that
+
+48
+00:02:29,840 --> 00:02:32,620
+will move the quadrotor to the left, that
+
+49
+00:02:32,620 --> 00:02:34,260
+will turn the quadrotor to the left.
+
+50
+00:02:34,260 --> 00:02:36,135
+On the other hand, if you want to turn right,
+
+51
+00:02:36,135 --> 00:02:37,930
+then you would increase the speed
+
+52
+00:02:37,930 --> 00:02:42,200
+of the left-rotating motors and decrease
+
+53
+00:02:42,200 --> 00:02:43,887
+the speed of the right-rotating motors.
+
+54
+00:02:43,887 --> 00:02:45,720
+Of course, you have to make sure that if you
+
+55
+00:02:45,720 --> 00:02:47,870
+want to keep your vertical position,
+
+56
+00:02:47,870 --> 00:02:50,280
+that the overall thrust of the four motors
+
+57
+00:02:50,280 --> 00:02:54,390
+exactly equals earth gravity.
+
+58
+00:02:54,390 --> 00:02:57,390
+Now for moving forward-- so forward in this schematic
+
+59
+00:02:57,390 --> 00:02:59,580
+here is the up direction.
+
+60
+00:02:59,580 --> 00:03:02,390
+If you want to move forward, you can do as follows.
+
+61
+00:03:02,390 --> 00:03:06,680
+You reduce the speed of your front motor
+
+62
+00:03:06,680 --> 00:03:10,210
+and increase the speed of your back motor.
+
+63
+00:03:10,210 --> 00:03:13,670
+And in this way, the quadrotor will tilt forward.
+
+64
+00:03:13,670 --> 00:03:17,220
+And in this way, the thrust is no longer perfectly aligned
+
+65
+00:03:17,220 --> 00:03:22,170
+with earth gravity, but it's slightly out of the axis.
+
+66
+00:03:22,170 --> 00:03:23,820
+And that will lead to an acceleration,
+
+67
+00:03:23,820 --> 00:03:27,050
+then, in the forward direction.
+
+68
+00:03:27,050 --> 00:03:29,650
+Similarly, if you want to fly backwards,
+
+69
+00:03:29,650 --> 00:03:32,400
+you would increase the speed of the front motor
+
+70
+00:03:32,400 --> 00:03:34,860
+and reduce the speed of the back motor.
+
+71
+00:03:34,860 --> 00:03:39,680
+And that will turn your quadrotor,
+
+72
+00:03:39,680 --> 00:03:42,240
+change the attitude of your quadrotor to the back,
+
+73
+00:03:42,240 --> 00:03:44,055
+and the again lead to an acceleration,
+
+74
+00:03:44,055 --> 00:03:47,910
+to a horizontal acceleration of your quadrotor.
+
+75
+00:03:47,910 --> 00:03:50,050
+Similarly, you can also move to the left
+
+76
+00:03:50,050 --> 00:03:52,490
+and to the right with the same principle.
+
+77
+00:03:52,490 --> 00:03:55,130
+And of course, you can also combine all of these motions
+
+78
+00:03:55,130 --> 00:03:58,480
+at the same time, for example to move to the left
+
+79
+00:03:58,480 --> 00:04:01,830
+and at the same time rotate to the left
+
+80
+00:04:01,830 --> 00:04:05,920
+to ascend and rotate and so on.
+
+81
+00:04:05,920 --> 00:04:06,460
+Good.
+
+82
+00:04:06,460 --> 00:04:10,370
+So this now brings us to our first and most
+
+83
+00:04:10,370 --> 00:04:11,360
+important platform.
+
+84
+00:04:11,360 --> 00:04:14,910
+As I said before, we will use the Parrot Ardrone
+
+85
+00:04:14,910 --> 00:04:18,009
+as the example model throughout this course.
+
+86
+00:04:18,009 --> 00:04:20,550
+If you happen to have one, you can also run all the exercises
+
+87
+00:04:20,550 --> 00:04:23,100
+then on the Parrot Ardrone.
+
+88
+00:04:23,100 --> 00:04:26,510
+But before we switch to the simulator,
+
+89
+00:04:26,510 --> 00:04:28,500
+it's also interesting to look a little bit more
+
+90
+00:04:28,500 --> 00:04:30,830
+at the hardware side of things.
+
+91
+00:04:30,830 --> 00:04:33,640
+So it consists obviously of four motors.
+
+92
+00:04:33,640 --> 00:04:35,990
+Those are so-called brushless motors.
+
+93
+00:04:35,990 --> 00:04:40,660
+Next week, we will look more at how brushless motors work.
+
+94
+00:04:40,660 --> 00:04:44,500
+They have a nominal power consumption of 14.5 watts,
+
+95
+00:04:44,500 --> 00:04:49,125
+so the overall quadrotor pulls around 60 to 80 watts,
+
+96
+00:04:49,125 --> 00:04:51,570
+with some loss there.
+
+97
+00:04:51,570 --> 00:04:55,040
+Every motor has its own motor controller
+
+98
+00:04:55,040 --> 00:04:59,320
+that runs a small CPU that controls the motor speed.
+
+99
+00:04:59,320 --> 00:05:05,310
+And there is a strong lithium polymer battery included
+
+100
+00:05:05,310 --> 00:05:09,490
+that powers the quadrotor between 10 to 15 minutes.
+
+101
+00:05:09,490 --> 00:05:13,900
+And the battery sits in the middle of the quadrotor.
+
+102
+00:05:13,900 --> 00:05:14,400
+Good.
+
+103
+00:05:14,400 --> 00:05:16,980
+We've also looked already a little bit at the sensors.
+
+104
+00:05:16,980 --> 00:05:18,870
+Here are more technical specs.
+
+105
+00:05:18,870 --> 00:05:23,150
+So we have an integrated inertial measurement unit inside
+
+106
+00:05:23,150 --> 00:05:26,350
+of the quadrotor that consists of a three-axis gyroscope,
+
+107
+00:05:26,350 --> 00:05:31,210
+a three-axis accelerometer, and a compass, or a magnetometer.
+
+108
+00:05:31,210 --> 00:05:33,210
+We'll also see next week more or what that means
+
+109
+00:05:33,210 --> 00:05:36,190
+and what the sensing principle of that is.
+
+110
+00:05:36,190 --> 00:05:39,300
+We have an ultrasound sensor to measure the distance
+
+111
+00:05:39,300 --> 00:05:42,600
+to the floor and additionally, a pressure sensor
+
+112
+00:05:42,600 --> 00:05:46,540
+that can be used whenever the ultrasound sensor doesn't
+
+113
+00:05:46,540 --> 00:05:47,210
+work anymore.
+
+114
+00:05:47,210 --> 00:05:50,435
+So ultrasound only has a range of maybe three meters or so.
+
+115
+00:05:50,435 --> 00:05:53,510
+So if you fly higher, especially outdoors,
+
+116
+00:05:53,510 --> 00:05:55,260
+ultrasound is not very useful.
+
+117
+00:05:55,260 --> 00:05:57,110
+But you can measure the air pressure.
+
+118
+00:05:57,110 --> 00:06:01,550
+And that then again tells you about your flying height.
+
+119
+00:06:01,550 --> 00:06:03,140
+There is also a visual odometry sensor
+
+120
+00:06:03,140 --> 00:06:05,230
+that is actually a camera running
+
+121
+00:06:05,230 --> 00:06:07,930
+at 60 frames per second.
+
+122
+00:06:07,930 --> 00:06:09,930
+We will also use the images from this camera
+
+123
+00:06:09,930 --> 00:06:14,190
+in the remainder of this course for tracking the position
+
+124
+00:06:14,190 --> 00:06:16,130
+visually of the quadrotor.
+
+125
+00:06:16,130 --> 00:06:22,090
+And there is a front camera at HD resolution
+
+126
+00:06:22,090 --> 00:06:25,240
+that we can also access from the PC.
+
+127
+00:06:25,240 --> 00:06:27,150
+So at the core of the Parrot Ardrone,
+
+128
+00:06:27,150 --> 00:06:31,650
+we have a full Linux system running,
+
+129
+00:06:31,650 --> 00:06:34,990
+consisting of a Cortex A8 processor running
+
+130
+00:06:34,990 --> 00:06:36,520
+at one gigahertz.
+
+131
+00:06:36,520 --> 00:06:39,110
+You can log into that system just
+
+132
+00:06:39,110 --> 00:06:42,630
+by telnetting to this computer.
+
+133
+00:06:42,630 --> 00:06:45,200
+It also has a USB2 host adapter in it
+
+134
+00:06:45,200 --> 00:06:47,760
+so you can add additional memory for recording videos,
+
+135
+00:06:47,760 --> 00:06:50,270
+for example, or a GPS module.
+
+136
+00:06:50,270 --> 00:06:52,250
+There are also hackers out there who
+
+137
+00:06:52,250 --> 00:06:57,210
+added attached completely different hardware to that.
+
+138
+00:06:57,210 --> 00:07:00,560
+And it carries a wireless network adapter,
+
+139
+00:07:00,560 --> 00:07:02,420
+with which we can communicate when
+
+140
+00:07:02,420 --> 00:07:04,370
+the quadrocopter is in the air.
+
+141
+00:07:04,370 --> 00:07:06,370
+And a good thing and that makes it so attractive
+
+142
+00:07:06,370 --> 00:07:11,500
+for us is that the API is fully open source, so it
+
+143
+00:07:11,500 --> 00:07:15,140
+is possible to communicate with the quadrotor
+
+144
+00:07:15,140 --> 00:07:18,240
+and get all of this sensor data and send back
+
+145
+00:07:18,240 --> 00:07:22,765
+motion commands to the quadrotor.
+
+146
+00:07:22,765 --> 00:07:24,250
+Next to the Parrot Ardrone, there
+
+147
+00:07:24,250 --> 00:07:27,780
+are also many other platforms currently available.
+
+148
+00:07:27,780 --> 00:07:31,019
+I've shown here a few that we also have in our lab,
+
+149
+00:07:31,019 --> 00:07:33,060
+although I have to say that the Parrot Ardrone is
+
+150
+00:07:33,060 --> 00:07:36,440
+by far the most popular among our students.
+
+151
+00:07:36,440 --> 00:07:40,060
+We also an Ascending Technologies Pelican
+
+152
+00:07:40,060 --> 00:07:41,190
+quadrocopter.
+
+153
+00:07:41,190 --> 00:07:43,900
+That's the one here shown in the top right.
+
+154
+00:07:43,900 --> 00:07:45,980
+It's slightly larger than the Ardrone.
+
+155
+00:07:45,980 --> 00:07:48,570
+It weighs around one kilogram.
+
+156
+00:07:48,570 --> 00:07:54,650
+And the good thing there is that we have a full computer there
+
+157
+00:07:54,650 --> 00:07:59,540
+and actually a Core 2 Duo processor running Ubuntu.
+
+158
+00:07:59,540 --> 00:08:02,710
+And we also have several USB plugs
+
+159
+00:08:02,710 --> 00:08:04,330
+so we can add additional sensors,
+
+160
+00:08:04,330 --> 00:08:09,380
+like a camera here on the top or an RGBD camera
+
+161
+00:08:09,380 --> 00:08:15,240
+like the Asus sensor here at the front of the quadrotor.
+
+162
+00:08:15,240 --> 00:08:20,750
+AscTec sells different other platforms,
+
+163
+00:08:20,750 --> 00:08:22,280
+like the Hummingbird that is quite
+
+164
+00:08:22,280 --> 00:08:24,620
+popular in Vijay Kumar's lab,
+
+165
+00:08:24,620 --> 00:08:27,590
+but also the Firefly, which is their new model, which
+
+166
+00:08:27,590 --> 00:08:31,070
+has six propellers instead of four.
+
+167
+00:08:31,070 --> 00:08:33,150
+Another very interesting platform
+
+168
+00:08:33,150 --> 00:08:38,210
+is the Crazyflie nanocopter.
+
+169
+00:08:38,210 --> 00:08:40,830
+It's much smaller than the other ones.
+
+170
+00:08:40,830 --> 00:08:43,690
+But it's also more difficult, then, to extend,
+
+171
+00:08:43,690 --> 00:08:45,960
+so the camera that we are mounting on it
+
+172
+00:08:45,960 --> 00:08:47,500
+only weighs four grams.
+
+173
+00:08:47,500 --> 00:08:52,050
+And this makes, of course, life much harder
+
+174
+00:08:52,050 --> 00:08:55,320
+if you have to use such a small and lightweight camera.
+
+175
+00:08:55,320 --> 00:08:57,550
+There are also a whole bunch of open source
+
+176
+00:08:57,550 --> 00:09:00,300
+and community-based projects, like the Mikrokopter,
+
+177
+00:09:00,300 --> 00:09:01,550
+for example.
+
+178
+00:09:01,550 --> 00:09:04,470
+You can buy the parts from their website.
+
+179
+00:09:04,470 --> 00:09:08,320
+But you can also get them from an electronics market
+
+180
+00:09:08,320 --> 00:09:12,210
+and essentially build it all by yourself.
+
+181
+00:09:12,210 --> 00:09:16,936
+So this now already brings us to the next interactive exercise,
+
+182
+00:09:16,936 --> 00:09:19,060
+where you can test your understanding of the flight
+
+183
+00:09:19,060 --> 00:09:20,800
+principle.
+
+184
+00:09:20,800 --> 00:09:24,010
+We've implemented a web-based quadrotor simulator.
+
+185
+00:09:24,010 --> 00:09:27,560
+And you can program it in Python.
+
+186
+00:09:27,560 --> 00:09:30,950
+And we now want you to use this simulator
+
+187
+00:09:30,950 --> 00:09:35,430
+to make the quadrotor to move in a particular direction.
+
+188
+00:09:35,430 --> 00:09:37,120
+So that means for the moment we assume
+
+189
+00:09:37,120 --> 00:09:39,740
+that we have absolutely no noise, so the quadrotor will
+
+190
+00:09:39,740 --> 00:09:43,680
+exactly follow our commands.
+
+191
+00:09:43,680 --> 00:09:46,390
+But so you need to specify a sequence of motor commands
+
+192
+00:09:46,390 --> 00:09:49,980
+that will make the quadrotor ascend and descend
+
+193
+00:09:49,980 --> 00:09:53,070
+and then fly forward and fly left.
+
+194
+00:09:53,070 --> 00:09:56,980
+And you can also find combinations of these motor
+
+195
+00:09:56,980 --> 00:09:59,050
+commands to make the quadrotor follow
+
+196
+00:09:59,050 --> 00:10:02,749
+a certain pre-specified path.
+
+197
+00:10:02,749 --> 00:10:05,040
+Of course, this is done completely without sensor data,
+
+198
+00:10:05,040 --> 00:10:07,065
+so we're flying completely blindly
+
+199
+00:10:07,065 --> 00:10:08,381
+through the environment.
+
+200
+00:10:08,381 --> 00:10:10,380
+But nevertheless, we thought that this gives you
+
+201
+00:10:10,380 --> 00:10:13,430
+a good understanding of the flight dynamics of a quadrotor
+
+202
+00:10:13,430 --> 00:10:14,930
+and that will then form a good basis
+
+203
+00:10:14,930 --> 00:10:17,410
+for the remainder of this course.
+
+204
+00:10:17,410 --> 00:10:19,010
+So have fun doing this exercise.
+
+205
+00:10:19,010 --> 00:10:21,690
+And then see you back for the last exercise this week
+
+206
+00:10:21,690 --> 00:10:25,090
+where I'll briefly outline the history of quadrotors
+
+207
+00:10:25,090 --> 23:59:59,999
+in general and in research.
+

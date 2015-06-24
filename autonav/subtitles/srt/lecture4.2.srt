@@ -1,0 +1,876 @@
+1
+00:00:01,170 --> 00:00:06,640
+Hello and welcome everybody to lecture 4.2 on feedback control. In this video we will
+
+2
+00:00:06,640 --> 00:00:12,240
+look at the problem of how to bring a dynamical system, say a quadrotor for example, in a particular
+
+3
+00:00:12,240 --> 00:00:20,080
+goal state by giving the right sequence of motion or action commands.
+
+4
+00:00:20,080 --> 00:00:25,380
+For example in the case of a quadrotor we often want to move it to a desired goal location. Say
+
+5
+00:00:25,380 --> 00:00:31,130
+above a landing spot or to the landing spot. And for that we need to generate of course
+
+6
+00:00:31,130 --> 00:00:37,569
+a suitable control signal. And this control signal essentially corresponds to the controls
+
+7
+00:00:37,569 --> 00:00:43,100
+that you give with the remote control. So you can change the roll and the pitch or
+
+8
+00:00:43,100 --> 00:00:50,600
+the height, and the yaw angle, the heading.
+
+9
+00:00:50,600 --> 00:00:54,850
+You could not do this blindly, you need to know of course where the robot is at the moment.
+
+10
+00:00:54,850 --> 00:00:59,030
+And then, you can compare this current location that you will have to observe through sensors
+
+11
+00:00:59,030 --> 00:01:04,989
+somehow with your goal location, and then based on the comparison on these two you can generate
+
+12
+00:01:04,989 --> 00:01:07,710
+a suitable control signal.
+
+13
+00:01:07,710 --> 00:01:12,890
+So before we go into more technical details I just want to give you a very intuitive example
+
+14
+00:01:12,890 --> 00:01:22,320
+first on what the generic idea behind feedback control actually is.
+
+15
+00:01:22,320 --> 00:01:28,820
+So imagine for example that you get a morning shower and you get out of the bed and you
+
+16
+00:01:28,820 --> 00:01:33,119
+jump into the shower. And then, you want to switch it on and you want to have your water
+
+17
+00:01:33,119 --> 00:01:40,950
+to have a comfortable temperature, say of 35 degrees. So you are in this case the controller
+
+18
+00:01:40,950 --> 00:01:47,229
+that selects the water temperature and you just switch on the valve or the mixer of your
+
+19
+00:01:47,229 --> 00:01:54,400
+shower and that will make the water flow of the system. The shower is then called the
+
+20
+00:01:54,400 --> 00:02:01,460
+system in control theory or the plant. And then you stand below the shower of course
+
+21
+00:02:01,460 --> 00:02:07,679
+and then you can sense the temperature of the water and then figure out that it's actually
+
+22
+00:02:07,679 --> 00:02:14,900
+not at the 35 degrees that you expected, but much below. And so you feedback, and this is the
+
+23
+00:02:14,900 --> 00:02:20,739
+idea of feedback control, and you feedback this measurement to the controller to take
+
+24
+00:02:20,739 --> 00:02:26,629
+an appropriate action. So in this case you first compare the observed temperature
+
+25
+00:02:26,629 --> 00:02:32,120
+to the desired temperature. You observe that there is a certain discrepancy of a few
+
+26
+00:02:32,120 --> 00:02:41,560
+degrees and so you would turn the valve hotter to hopefully make the water warmer.
+
+27
+00:02:41,560 --> 00:02:51,349
+And if necessary, you do this close looped cycle until the water has reached the right temperature.
+
+28
+00:02:51,349 --> 00:02:58,349
+So much to the generic idea, now let's look at this in a more technical way. It's often
+
+29
+00:02:58,349 --> 00:03:03,579
+drawn in block diagram like this. On the left side you can see the reference signal or the
+
+30
+00:03:03,579 --> 00:03:12,150
+goal state that we try to achieve. And this goal state or desired value is compared to
+
+31
+00:03:12,150 --> 00:03:17,019
+the current state of our system. And then this difference, the so called measurement
+
+32
+00:03:17,019 --> 00:03:22,409
+error, is then feed into a controller. And this controller can be arbitrary complex, but for this video
+
+33
+00:03:22,409 --> 00:03:26,849
+we just look at a proportional, a P controller, as we will see in a second.
+
+34
+00:03:26,849 --> 00:03:34,930
+And this controller then generates a control output. This can be for example a 1 dimensional
+
+35
+00:03:34,930 --> 00:03:40,980
+variable that just specifies whether we should turn it hotter or colder or to move the quadrotor
+
+36
+00:03:40,980 --> 00:03:46,650
+forward or backward. But it can also have multiple dimensions as we will see later.
+
+37
+00:03:46,650 --> 00:03:53,090
+And then this control goes into our system. For example, into the shower or the pipe system.
+
+38
+00:03:53,090 --> 00:03:58,159
+And this control then changes the internal state of the system,
+
+39
+00:03:58,159 --> 00:04:05,300
+so the output of the system is its internal state, which we can then observe with one or more
+
+40
+00:04:05,300 --> 00:04:08,200
+sensors to obtain a measured state.
+
+41
+00:04:08,200 --> 00:04:15,500
+And this measured state is then compared again to the reference value
+
+42
+00:04:15,500 --> 00:04:23,400
+and leads to an updated measured error that is used again by the controller to adjust the controls.
+
+43
+00:04:23,400 --> 00:04:31,300
+So as I said, the controller can be arbitrarily complex but a very simple and efficient controller,
+
+44
+00:04:31,300 --> 00:04:36,900
+thats actually used a lot in practice, is just a linear controller that takes the error
+
+45
+00:04:36,900 --> 00:04:45,000
+that we are getting in and multiplies it by a constant, the so called gain.
+
+46
+00:04:45,000 --> 00:04:55,820
+So this K here can be anything, any positive value in principal. And in this way we take directly the error values.
+
+47
+00:04:55,820 --> 00:05:01,500
+And so the controls depend linearly on the errors.
+
+48
+00:05:01,500 --> 00:05:08,400
+And then, our system can of course also behave arbitrarily complex, but in the case of the shower example,
+
+49
+00:05:08,400 --> 00:05:13,800
+and also for the quadrotor for position control, we can just tread it as a linear system.
+
+50
+00:05:13,800 --> 00:05:23,820
+So the new state can be computed from the old state plus the control that we have given.
+
+51
+00:05:23,820 --> 00:05:28,790
+So if we increase the temperature by 5 degrees, then we would just add +5 to the previous
+
+52
+00:05:28,790 --> 00:05:36,600
+state of the system. And there might be some error constant epsilon here that describes the
+
+53
+00:05:36,600 --> 00:05:44,100
+system noise. Things that are out of our control, for example, a changing temperature or water
+
+54
+00:05:44,100 --> 00:05:49,330
+pressure in the water system.
+
+55
+00:05:49,330 --> 00:05:56,330
+And then this system state gets observed by our sensor. Again the sensor can be arbitrarily
+
+56
+00:05:56,330 --> 00:06:02,650
+complex, but for the shower we could just assume that we have a linear temperature sensor
+
+57
+00:06:02,650 --> 00:06:09,890
+that observes exactly the temperature from the system plus some noise delta that changes
+
+58
+00:06:09,890 --> 00:06:16,300
+every time constant, but it is distributed according to some distribution.
+
+59
+00:06:16,300 --> 00:06:20,720
+So now let's have a look, what this does for our shower example.
+
+60
+00:06:20,720 --> 00:06:27,300
+In the first plot, so now we assume that we have this control law where the control output just
+
+61
+00:06:27,300 --> 00:06:34,800
+depends linearly on our error. And now imagine that we start at say 25 degrees and we want
+
+62
+00:06:34,800 --> 00:06:41,340
+to achieve 35 degrees in the shower to have it comfortably warm. Then in the first time
+
+63
+00:06:41,340 --> 00:06:50,150
+step the algorithm would compare the observed temperature 25 to the desired value 35 and
+
+64
+00:06:50,150 --> 00:06:56,940
+find that there is a difference of +10. So it would feedback a control or it would generate
+
+65
+00:06:56,940 --> 00:07:02,300
+a control of +10. And then within one time step this control
+
+66
+00:07:02,300 --> 00:07:06,130
+would change the temperature of the shower. And in the next time step we already have
+
+67
+00:07:06,130 --> 00:07:12,880
+reached the 35 degrees, and because we are at the desired value already the error term
+
+68
+00:07:12,880 --> 00:07:20,800
+will become 0, and as a result, also the control will become 0 then.
+
+69
+00:07:20,800 --> 00:07:26,700
+Of course this is not very realistic because you always have some noise in such a system.
+
+70
+00:07:26,700 --> 00:07:34,900
+Both, in the process itself so in the system but also in the measurements and in your sensor.
+
+71
+00:07:34,900 --> 00:07:41,120
+And now, for this plot I added some noise in the measurements. So instead of returning
+
+72
+00:07:41,120 --> 00:07:46,610
+exactly the right temperature of the internal state of the system we get a noisy observation
+
+73
+00:07:46,610 --> 00:07:52,100
+of that. But still we can compare this noisy observation with our desired value and with
+
+74
+00:07:52,100 --> 00:08:01,210
+the same law as before we can use that to generate a control. And as you cans see, again
+
+75
+00:08:01,210 --> 00:08:06,810
+we reach roughly the desired temperature but you can also see that it is quite jumpy, for
+
+76
+00:08:06,810 --> 00:08:16,670
+example roughly at 8 seconds time or so, we reach a temperature of 37 or almost 38 degrees.
+
+77
+00:08:16,670 --> 00:08:24,580
+And then, later at maybe 12 seconds time it even drops down to 35. So this is probably
+
+78
+00:08:24,580 --> 00:08:32,000
+not very comfortable in the morning to have such a temperature profile of your shower.
+
+79
+00:08:32,000 --> 00:08:36,700
+Another problem here is that the controller always generates some control commands, so
+
+80
+00:08:36,700 --> 00:08:43,789
+you can see that the green line here in the bottom plot is not reaching 0, it always
+
+81
+00:08:43,789 --> 00:08:52,300
+changes a lot between plus and minus 4 maybe. And this means that if you would be under
+
+82
+00:08:52,300 --> 00:08:56,899
+the shower you would have to constantly adapt the temperature and that's of course not very
+
+83
+00:08:56,899 --> 00:09:02,560
+comfortable, but also for a quadrotor this would not be very energy efficient if you
+
+84
+00:09:02,560 --> 00:09:07,829
+have to give constantly controls just to keep the same temperature.
+
+85
+00:09:07,829 --> 00:09:17,540
+So as you can see, if we keep it as before, if we chose K equals 1, so directly used the error
+
+86
+00:09:17,540 --> 00:09:24,500
+as the control, then we get a relatively poor performance. And now the question of course is:
+
+87
+00:09:24,500 --> 00:09:33,250
+how can we improve on that? And one very simple way is to lower this gain K,
+
+88
+00:09:33,250 --> 00:09:43,230
+to a lower value, say 0.15. If we observe 10 degrees difference between our current
+
+89
+00:09:43,230 --> 00:09:52,900
+value and the desired one, then we will only try to adjust it by 1.5 degrees per time step.
+
+90
+00:09:52,900 --> 00:10:01,220
+And that makes us somewhat more robust against noise, we kind of filter away the noise partially.
+
+91
+00:10:01,220 --> 00:10:05,449
+But it also means that it takes much longer then to reach our desired temperature.
+
+92
+00:10:05,449 --> 00:10:11,370
+So in this example for example the red line, which is the true line of the temperature
+
+93
+00:10:11,370 --> 00:10:18,370
+reaches 35 degrees around 20 seconds time. But nevertheless we can see that it keeps
+
+94
+00:10:18,370 --> 00:10:26,900
+the desired temperature relatively well. Despite this large sensor noise that we have in our system.
+
+95
+00:10:26,900 --> 00:10:32,900
+But the problem obviously is that, if you lower the gain to much, then your system or
+
+96
+00:10:32,900 --> 00:10:39,100
+your controller will get slower and slower and it will take more and more time to reach
+
+97
+00:10:39,100 --> 00:10:40,810
+the desired value.
+
+98
+00:10:40,810 --> 00:10:46,400
+So you could think of how large can you make this gain that it still works.
+
+99
+00:10:46,400 --> 00:10:53,110
+And you might also be tempted to make the gain larger than 1. And this should be noted
+
+100
+00:10:53,110 --> 00:10:56,720
+that this is always problematic actually. For example, consider this example where we
+
+101
+00:10:56,720 --> 00:11:06,860
+chose a coefficient of 2.15. And now what happens is that it always overshoots a lot because
+
+102
+00:11:06,860 --> 00:11:12,249
+it finds that there is a 10 degree difference between the current value and the desired
+
+103
+00:11:12,249 --> 00:11:19,249
+value. So it will multiply that by 2.15, and then, add 20 degrees to that and then be much
+
+104
+00:11:19,249 --> 00:11:24,470
+too high. And then, in the next time step it will find that the temperature is way too high
+
+105
+00:11:24,470 --> 00:11:31,230
+and then reduce it and so on. And this will start to oscillate and actually
+
+106
+00:11:31,230 --> 00:11:34,449
+this oscillations will increase over time.
+
+107
+00:11:34,449 --> 00:11:38,740
+So be careful with to large gains.
+
+108
+00:11:38,740 --> 00:11:43,930
+Another thing that happens often in practice actually, when you program a controller,
+
+109
+00:11:43,930 --> 00:11:50,400
+is that you might end up with the wrong sign either in the coefficient or in the way how you compute the errors.
+
+110
+00:11:50,400 --> 00:11:55,300
+So if you observe when you doing the exercise for this week, and you observe that your quadrotor
+
+111
+00:11:55,300 --> 00:12:01,100
+shoots away in one direction, then maybe check the sign of your error function or of
+
+112
+00:12:01,100 --> 00:12:02,100
+your coefficient.
+
+113
+00:12:02,100 --> 00:12:06,290
+So let's see what's happens if we chose a negative coefficient.
+
+114
+00:12:06,290 --> 00:12:10,870
+And then what we can see, if the algorithm or our controller finds that the temperature
+
+115
+00:12:10,870 --> 00:12:19,279
+is too low it will even make it lower than before. And so the shower reduces the
+
+116
+00:12:19,279 --> 00:12:23,649
+temperature more and more. This is a fun example of course, the temperature
+
+117
+00:12:23,649 --> 00:12:33,500
+drops to negative degrees and then at some point convergence to -272 degrees.
+
+118
+00:12:33,500 --> 00:12:40,900
+So this is the absolute zero point. And this is actually an interesting aspect
+
+119
+00:12:40,900 --> 00:12:48,809
+that in most practical cases you can get saturation effects, either in the state space so that
+
+120
+00:12:48,809 --> 00:12:57,400
+the shower can't get colder than maybe 0 degrees Celsius and that it can't get hotter than
+
+121
+00:12:57,400 --> 00:13:01,790
+maybe 100 degrees. So you don't want to get it hotter than 60 degrees, so you have saturation
+
+122
+00:13:01,790 --> 00:13:08,439
+in the state space. But at the same time you can also have saturation in your control space,
+
+123
+00:13:08,439 --> 00:13:14,949
+which means that you can't arbitrarily fast open the valve for hot water for example
+
+124
+00:13:14,949 --> 00:13:20,550
+or you can't fly or accelerate arbitrarily fast with a quadrotor. And this is then called
+
+125
+00:13:20,550 --> 00:13:26,740
+a control saturation, which just means that your control has a maximum and a minimum value
+
+126
+00:13:26,740 --> 00:13:28,410
+that you can give.
+
+127
+00:13:28,410 --> 00:13:34,420
+So for example, if you have to open the valve by hand, then maybe you can only rotate it
+
+128
+00:13:34,420 --> 00:13:41,980
+at a certain speed. And this might mean that it takes a few seconds until you have opened
+
+129
+00:13:41,980 --> 00:13:49,000
+it enough to get your 35 degrees of desired temperature.
+
+130
+00:13:49,000 --> 00:13:54,800
+Time delays are another very important problem that you have in most practical systems,
+
+131
+00:13:54,800 --> 00:13:59,559
+especially in a shower that you don't know or that you don't know the dynamics. This
+
+132
+00:13:59,559 --> 00:14:10,499
+can be a very tricky problem, so the thing is that you switch on, or you try to increase the temperature,
+
+133
+00:14:10,499 --> 00:14:17,309
+but nothing happens. So for example here in time step 8, the valve is opened or the temperature
+
+134
+00:14:17,309 --> 00:14:22,399
+is being changed. But in the blue line, which gives us the observations from our systems,
+
+135
+00:14:22,399 --> 00:14:29,100
+nothing changes for 5 seconds, because we have a time delay of 5 seconds.
+
+136
+00:14:29,100 --> 00:14:34,949
+And only after these 5 seconds we get the first readings of the changed temperature,
+
+137
+00:14:34,949 --> 00:14:40,300
+but by the time we think that we have reached the 35 degrees, which is roughly at time step
+
+138
+00:14:40,300 --> 00:14:49,300
+19 here, the shower is already much hotter, maybe at 38 or so. Because we don't know we
+
+139
+00:14:49,300 --> 00:14:59,040
+overshoot. And then, we need to reduce the temperature again, give negative controls to bring the
+
+140
+00:14:59,040 --> 00:15:02,170
+temperature down to 35 degrees.
+
+141
+00:15:02,170 --> 00:15:07,399
+And this first effect here is called overshooting, so if you're going beyond the desired value
+
+142
+00:15:07,399 --> 00:15:14,800
+that you are actually trying to achieve. And if it goes back and forth around your desired
+
+143
+00:15:14,800 --> 00:15:18,379
+value, then this is called an oscillation. And in the worst case, depending on how your
+
+144
+00:15:18,379 --> 00:15:24,220
+delays are and what the dynamics are of your system this can even lead to destabilization.
+
+145
+00:15:24,220 --> 00:15:29,709
+One solution always is obviously to lower the gains of your controller, but as we have
+
+146
+00:15:29,709 --> 00:15:37,499
+seen before this is probably a bad idea. It can help, but the disadvantage is that the
+
+147
+00:15:37,499 --> 00:15:43,860
+convergence takes much longer, and maybe you have to wait a few minutes then in the shower until
+
+148
+00:15:43,860 --> 00:15:49,389
+you get the right temperature that you desire.
+
+149
+00:15:49,389 --> 00:15:53,579
+So let's look at this time delay problem in a little bit more detail, because we will
+
+150
+00:15:53,579 --> 00:16:00,900
+also need it for the quadrotors. The problem in general is that you might have several
+
+151
+00:16:00,900 --> 00:16:05,740
+places where time delays can occur. Actually in all of these components you could have
+
+152
+00:16:05,740 --> 00:16:10,050
+time delays, so of course, the most obvious one in the shower example is that the water
+
+153
+00:16:10,050 --> 00:16:16,040
+pipe might introduce a considerable time delay if you have huge pipes with little water going
+
+154
+00:16:16,040 --> 00:16:19,400
+through them. But also your measurement system, your sensor
+
+155
+00:16:19,400 --> 00:16:24,929
+might introduce a certain delay, and also your controller or the communication between these
+
+156
+00:16:24,929 --> 00:16:28,559
+components might introduce delays.
+
+157
+00:16:28,559 --> 00:16:34,329
+So one question here now is: whether or not we can actually distinguish between the individual
+
+158
+00:16:34,329 --> 00:16:43,179
+time delays from within the controller? And the quick answer here is that it's not possible
+
+159
+00:16:43,179 --> 00:16:49,079
+to distinguish that for the controller. The dead time or the delay of the system or of
+
+160
+00:16:49,079 --> 00:16:58,019
+the whole loop is not observable, it always appears as if you have a system with 1.2 seconds
+
+161
+00:16:58,019 --> 00:17:02,449
+delay in this case.
+
+162
+00:17:02,449 --> 00:17:11,000
+So there is a simple solution to accommodate for delays. And that is the so called Smith
+
+163
+00:17:11,000 --> 00:17:20,319
+predictor, which allows you to use higher gains then you could use if you just ignore the delays.
+
+164
+00:17:20,319 --> 00:17:26,400
+However, the Smith predictor requires a very accurate system model and you might not have always
+
+165
+00:17:26,400 --> 00:17:31,820
+such an accurate model. So the idea of the smith predictor is as follows.
+
+166
+00:17:31,820 --> 00:17:38,820
+Again, we have a controller that compares the current predicted state with the desired
+
+167
+00:17:38,820 --> 00:17:44,630
+state, and then generates a control signal that we feed into the system that has a certain
+
+168
+00:17:44,630 --> 00:17:54,870
+delay. But instead of sensing the output of the system we have a delay free system model
+
+169
+00:17:54,870 --> 00:18:01,900
+that we calibrated and that we think is accurate as possible to model our real system.
+
+170
+00:18:01,900 --> 00:18:09,900
+And this model is delay free, so it gives us immediately the expected observation from
+
+171
+00:18:09,900 --> 00:18:14,770
+the system at the current time step. And we can then feed that back into the controller
+
+172
+00:18:14,770 --> 00:18:17,450
+to compare it to the desired value.
+
+173
+00:18:17,450 --> 00:18:22,370
+Now this by itself would only work if you have a perfectly accurate model, which of
+
+174
+00:18:22,370 --> 00:18:30,420
+course is never the case in any real situation. But this is where the Smith predictor idea
+
+175
+00:18:30,420 --> 00:18:36,040
+comes in. We still have a sensor then that observes the system state, but remember this
+
+176
+00:18:36,040 --> 00:18:41,630
+observation set t is actually time delayed by a certain time delay.
+
+177
+00:18:41,630 --> 00:18:50,240
+And what we now do is we also time delay our prediction z^(pred) that we got from our system
+
+178
+00:18:50,240 --> 00:18:56,750
+model and we compare these two. And if our model is perfectly accurate, then the difference
+
+179
+00:18:56,750 --> 00:19:02,110
+between the real sensor observation and the delayed sensor observation should be zero.
+
+180
+00:19:02,110 --> 00:19:12,120
+If it's however not perfect, then we will get here a residual that we can use to correct
+
+181
+00:19:12,120 --> 00:19:24,100
+our delay free prediction. And in this way we can take advantage of both,
+
+182
+00:19:24,100 --> 00:19:30,400
+the delay free system model, but we can also deal with deviations from that. So if our
+
+183
+00:19:30,400 --> 00:19:36,220
+system model doesn't do anything or is partially wrong then we still have this normal error term
+
+184
+00:19:36,220 --> 00:19:43,500
+that just considers the difference of the sensor and the model.
+
+185
+00:19:43,500 --> 00:19:48,010
+So let's first look at a very simple example, where we assume that we have a perfect system
+
+186
+00:19:48,010 --> 00:19:52,860
+model of our shower, and we have a 5 seconds delay.
+
+187
+00:19:52,860 --> 00:19:57,300
+The Smith predictor results in a perfect compensation because we know exactly what's going on in
+
+188
+00:19:57,300 --> 00:20:04,400
+the system. And we can perfectly compensate for the delay then.
+
+189
+00:20:04,400 --> 00:20:08,910
+Of course, this is completely unrealistic in practice because you never have a good model
+
+190
+00:20:08,910 --> 00:20:16,300
+or a super accurate model, there will always be some parts of the system that you can't
+
+191
+00:20:16,300 --> 00:20:22,180
+model exactly. And the other problem is that you typically don't know exactly about the
+
+192
+00:20:22,180 --> 00:20:26,830
+delay. in some systems you know, but if it's a communication delay for example, that you
+
+193
+00:20:26,830 --> 00:20:32,680
+get through wireless then this delay or the bandwidth might change as you fly and it's
+
+194
+00:20:32,680 --> 00:20:42,360
+not always possible to know how long the signal was traveling.
+
+195
+00:20:42,360 --> 00:20:48,030
+Because you have these uncertainties, the question is: whether you should better over-
+
+196
+00:20:48,030 --> 00:20:50,900
+or underestimate the time delay?
+
+197
+00:20:50,900 --> 00:20:57,900
+Let's consider first if we would overestimate the time delay what the result would be.
+
+198
+00:20:57,900 --> 00:21:04,840
+And then, the effect is as follows: so our system, the Smith predictor predicts too far
+
+199
+00:21:04,840 --> 00:21:11,760
+into the future, which means that it thinks that just by giving it a certain control command
+
+200
+00:21:11,760 --> 00:21:17,370
+that we have already reached our desired goal location. Because in a very distant future
+
+201
+00:21:17,370 --> 00:21:23,210
+we already might be at the desired state or we might even overshoot. So it will greatly
+
+202
+00:21:23,210 --> 00:21:29,330
+reduce the controls and in the next time step, because it thinks that we're already going
+
+203
+00:21:29,330 --> 00:21:34,900
+too fast. And then it would project that into the future,
+
+204
+00:21:34,900 --> 00:21:39,880
+and then realize that it is actually to slow and so it would go back and forth and oscillate.
+
+205
+00:21:39,880 --> 00:21:46,400
+And as you can see this is clearly not optimal. And it also leads to large changes in the
+
+206
+00:21:46,400 --> 00:21:50,440
+control. Which is actually not what we want because this costs a lot of energy.
+
+207
+00:21:50,440 --> 00:21:56,920
+An alternative then is to underestimate the time delay and that is actually what's often
+
+208
+00:21:56,920 --> 00:22:03,640
+done in practice. Because then you don't get this overshooting effect of you prediction.
+
+209
+00:22:03,640 --> 00:22:08,880
+Although you still have a certain discrepancy between your model and the actual system, because
+
+210
+00:22:08,880 --> 00:22:13,520
+you underestimating the time delay. But in this way you can use your model to compensate
+
+211
+00:22:13,520 --> 00:22:21,850
+for half or maybe 90 percent of your time delay and you consider the rest, as the noise
+
+212
+00:22:21,850 --> 00:22:28,180
+or the thing that you try to not model and just use directly the sensor readings.
+
+213
+00:22:28,180 --> 00:22:40,060
+This leads of course to a slightly slower convergence in the end but it circumvents oscillations and
+
+214
+00:22:40,060 --> 00:22:46,760
+makes your approach the goal state nicely.
+
+215
+00:22:46,760 --> 00:22:52,280
+So this concludes the video then for this session. We have looked at the control problem, the
+
+216
+00:22:52,280 --> 00:22:57,920
+feedback control problem in particular. We have introduced proportional control and we
+
+217
+00:22:57,920 --> 00:23:02,560
+have briefly looked at delay compensation using the Smith predictor.
+
+218
+00:23:02,560 --> 00:23:08,330
+And then in the next video we will extend this to a full PID control and then apply
+
+219
+00:23:08,330 --> 23:59:59,999
+that to a position control for quadrotors.
+

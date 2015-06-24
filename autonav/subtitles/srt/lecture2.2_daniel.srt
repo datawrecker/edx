@@ -1,0 +1,404 @@
+1
+00:00:00,810 --> 00:00:06,680
+Hello and welcome back to lecture 2.2 on 2D geometry.
+
+2
+00:00:06,680 --> 00:00:14,200
+In this video I will introduce the basic concepts of 2D points and lines, and we will discuss
+
+3
+00:00:14,200 --> 00:00:20,390
+how to transform these entities using 2D transformations.
+
+4
+00:00:20,390 --> 00:00:27,390
+As you all know we can represent 2D points, as a 2D vector which we will denote by a
+
+5
+00:00:27,390 --> 00:00:34,929
+boldface x. This vector has two components x and y, which represent the coordinates of this
+
+6
+00:00:34,929 --> 00:00:43,300
+2D point. We can also represent the same 2D point by what's called an augmented vector.
+
+7
+00:00:43,300 --> 00:00:50,380
+This is a 3D vector where the first two components represent this point, the coordinates.
+
+8
+00:00:50,380 --> 00:00:56,210
+And the third component is just 1. This vector we will denote by x bar.
+
+9
+00:00:56,210 --> 00:01:02,540
+At a first glance this makes things more complicated seemingly, but as we will see in this video
+
+10
+00:01:02,540 --> 00:01:09,710
+it actually simplifies calculations, such as intersecting lines and points, and such
+
+11
+00:01:09,710 --> 00:01:17,579
+as representing transformations of these points in terms of simple matrix-vector products.
+
+12
+00:01:17,579 --> 00:01:24,590
+Furthermore, we can introduce a representation for 2D points the same 2D point by what's
+
+13
+00:01:24,590 --> 00:01:31,259
+called a homogeneous coordinates, sometimes also called projective coordinates. These
+
+14
+00:01:31,259 --> 00:01:41,119
+are 3D vectors that have three independent components, but the key idea is that two homogenous
+
+15
+00:01:41,119 --> 00:01:47,700
+vectors that only differ by scale actually represent the same 2D point.
+
+16
+00:01:47,700 --> 00:01:54,310
+We can then convert back from homogenous to inhomogeneous coordinates, simply by dividing
+
+17
+00:01:54,310 --> 00:01:59,759
+through the last element. So here for example, if you have a homogenous
+
+18
+00:01:59,759 --> 00:02:08,229
+vector with components x tilde, y tilde, w tilde, dividing by the last component w tilde
+
+19
+00:02:08,229 --> 00:02:18,269
+gives you back the 2D coordinates x and y representing this point.
+
+20
+00:02:18,269 --> 00:02:25,180
+In particular, of course with homogeneous coordinates, w tilde can become 0. Assume
+
+21
+00:02:25,180 --> 00:02:33,159
+we have a point x tilde with this three components, and we now let w tilde go to 0. Then the point
+
+22
+00:02:33,159 --> 00:02:42,519
+coordinates x and y of this point move towards infinity, and so for w tilde equals 0 these
+
+23
+00:02:42,519 --> 00:02:49,549
+points are called "points at infinity" or "ideal points", and they then in fact represent
+
+24
+00:02:49,549 --> 00:02:55,430
+a direction in space.
+
+25
+00:02:55,430 --> 00:03:01,900
+We can represent lines as you all know by some offset from the origin and some direction
+
+26
+00:03:01,900 --> 00:03:06,909
+of the line. In this class we will use a homogeneous coordinate
+
+27
+00:03:06,909 --> 00:03:15,010
+vector l tilde to represent lines. It contains three components a, b, c, and the idea is
+
+28
+00:03:15,010 --> 00:03:24,980
+that any point on the line, written in this augmented vector x bar is on the line, if
+
+29
+00:03:24,980 --> 00:03:33,500
+and only if it is orthogonal to l tilde. So the scalar product of x bar and l tilde
+
+30
+00:03:33,500 --> 00:03:40,670
+being just ax + by + c must be 0.
+
+31
+00:03:40,670 --> 00:03:48,340
+Of course, again as with homogeneous coordinates for points, here as well two vectors represent
+
+32
+00:03:48,340 --> 00:03:58,300
+the same line if they only differ by scaling. In particular this allows us to define a normalized
+
+33
+00:03:58,300 --> 00:04:05,290
+line equation, where the homogeneous coordinate vector l tilde, representing the line, is
+
+34
+00:04:05,290 --> 00:04:12,700
+chosen such that the first two components define the normal vector, so a unit vector
+
+35
+00:04:12,700 --> 00:04:21,769
+be that is orthogonal to the line. And then the third component here d is simply the offset
+
+36
+00:04:21,769 --> 00:04:26,580
+from the origin.
+
+37
+00:04:26,580 --> 00:04:33,919
+With homogeneous coordinates we can very easily define a line connecting to points. So if
+
+38
+00:04:33,919 --> 00:04:41,120
+we represent these two points x_1 and x_2, in terms of homogeneous coordinates, then
+
+39
+00:04:41,120 --> 00:04:48,900
+the line connecting them is simply given by the cross-product of the homogeneous coordinate vectors.
+
+40
+00:04:48,900 --> 00:04:54,069
+Similarly if we want to define the intersection
+
+41
+00:04:54,069 --> 00:05:02,000
+of two lines, represented in homogeneous coordinates by l_1 tilde and l_2 tilde.
+
+42
+00:05:02,000 --> 00:05:11,900
+Then the point in their intersection is given by the cross-product of this two vectors. And so here you can see
+
+43
+00:05:11,900 --> 00:05:21,669
+how things like intersecting lines or connecting points with a line can be very easily done
+
+44
+00:05:21,669 --> 00:05:27,590
+in homogeneous or projective coordinates.
+
+45
+00:05:27,590 --> 00:05:34,500
+Similarly these projective coordinates help to model 2D transformations of points or lines.
+
+46
+00:05:34,500 --> 00:05:41,210
+Here the simplest transformation you can think of is a transformation is a 2D translation.
+
+47
+00:05:41,210 --> 00:05:48,200
+That is a vector x is translated to a vector x' simply by adding an offset vector t.
+
+48
+00:05:48,200 --> 00:05:56,900
+That's a 2D vector representing this offset. We can represent the same transformation as
+
+49
+00:05:56,900 --> 00:06:04,400
+a matrix-vector product once we write the vector x as an augmented vector. Again the
+
+50
+00:06:04,400 --> 00:06:11,800
+third component being 1. Then this x + t can be written as a matrix-vector product with
+
+51
+00:06:11,800 --> 00:06:20,060
+a 2 by 3 matrix where the first block is an identity matrix and the last column is the
+
+52
+00:06:20,060 --> 00:06:24,259
+2D translation vector t.
+
+53
+00:06:24,259 --> 00:06:32,800
+If we write both the input and output in homogeneous coordinates x tilde and x tilde prime, then
+
+54
+00:06:32,800 --> 00:06:41,750
+the transformed vector is obtained from the original vector x tilde by a matrix multiplication
+
+55
+00:06:41,750 --> 00:06:48,460
+with a 3 by 3 matrix that contains in the upper left corner an identity matrix, the
+
+56
+00:06:48,460 --> 00:06:59,700
+upper right part of the last column is the translation vector and below we have 0s and 1.
+
+57
+00:06:59,700 --> 00:07:05,389
+We can generalize the translation by adding a rotation, this leads to what's called a
+
+58
+00:07:05,389 --> 00:07:13,300
+rigid body motion or a euclidian transformation. And in standard 2D coordinates we can write
+
+59
+00:07:13,300 --> 00:07:23,400
+it as Rx + t. In homogenous coordinates, again we can just write it as a matrix-vector product.
+
+60
+00:07:23,400 --> 00:07:31,270
+Where the upper left hand corner is the rotation matrix R, containing cosine and sine in for
+
+61
+00:07:31,270 --> 00:07:39,400
+a 2D transformation of this angle Theta the rotation angle. So this is an orthogonal matrix.
+
+62
+00:07:39,400 --> 00:07:48,700
+i.e. RR^T = I and it has determinant +1. And again in this matrix the 3 by 3 matrix
+
+63
+00:07:48,700 --> 00:07:58,000
+defining this Euclidian transform the upper right hand corner we have the translation vector t.
+
+64
+00:07:58,000 --> 00:08:04,629
+It's actually quit useful that you can write transformations as matrix-vector products,
+
+65
+00:08:04,629 --> 00:08:11,259
+because it allows you to very elegantly concatenate transformations. So if you concatenate two
+
+66
+00:08:11,259 --> 00:08:20,200
+rigid body transformations, then it simply amounts to a matrix product of the two matrices.
+
+67
+00:08:20,200 --> 00:08:27,900
+Rigid body transformations are transformations which preserve distances and angles, and vice versa.
+
+68
+00:08:27,900 --> 00:08:34,400
+One can actually show that any transformation which does preserve distances and angles is
+
+69
+00:08:34,400 --> 00:08:41,260
+in variably a rotation plus translation.
+
+70
+00:08:41,260 --> 00:08:49,500
+We can generalize this rigid body transformation by introducing a scaling by a scalar little s here.
+
+71
+00:08:49,500 --> 00:08:56,500
+And that leads to what calls a similarity transform that consists of a translation and
+
+72
+00:08:56,500 --> 00:09:02,130
+a scaled rotation. We can write it again in homogeneous coordinates
+
+73
+00:09:02,130 --> 00:09:12,500
+as a matrix-vector product, where the upper left hand corner is the scaled rotation matrix s times R.
+
+74
+00:09:12,500 --> 00:09:21,500
+Similarity transforms no longer preserve length because of a potentially non-uniform scaling s
+
+75
+00:09:21,500 --> 00:09:27,839
+but they still preserve angles, as shown in the upper right hand side. So a square
+
+76
+00:09:27,839 --> 00:09:34,790
+for example can be transformed to a rectangle.
+
+77
+00:09:34,790 --> 00:09:41,760
+We can further generalize the similarity transform by replacing the rotation matrix in the upper
+
+78
+00:09:41,760 --> 00:09:48,760
+left hand corner by an arbitrary matrix, 2 by 2 matrix. And this leads to what is called
+
+79
+00:09:48,760 --> 00:09:55,279
+an affine transformation. As you can see in a homogenous coordinates this transformation
+
+80
+00:09:55,279 --> 00:10:03,900
+has 6 parameters. And in particular what is preserved in an affine transformation is that
+
+81
+00:10:03,900 --> 00:10:11,000
+parallel lines remain parallel. So angles are no longer preserved in general,
+
+82
+00:10:11,000 --> 00:10:18,700
+length is not preserved, but parallel lines remain parallel.
+
+83
+00:10:18,700 --> 00:10:27,800
+We can further generalize the affine transformation to the most generic 2D linear transformation,
+
+84
+00:10:27,800 --> 00:10:35,200
+and that in homogeneous coordinates. And that is called the homography or projective transformation
+
+85
+00:10:35,200 --> 00:10:43,180
+and that can be written by a matrix large H tilde, which is a homography matrix and this
+
+86
+00:10:43,180 --> 00:10:51,510
+is a 3 by 3 matrix containing 9 elements, but you should remember that we working in
+
+87
+00:10:51,510 --> 00:10:59,700
+homogeneous coordinates.  Meaning that two vectors are identical if the only differ by scaling.
+
+88
+00:10:59,700 --> 00:11:08,190
+That implies for two homograph matrices, if the only differ by scaling they actually correspond
+
+89
+00:11:08,190 --> 00:11:17,600
+to the same projective transformation. What is preserved in a homography or projective
+
+90
+00:11:17,600 --> 00:11:23,550
+transformation is that straight lines remain straight lines. So as you can see here in
+
+91
+00:11:23,550 --> 00:11:30,540
+the upper right hand drawing, in the homography transformation of the rectangle: parallel
+
+92
+00:11:30,540 --> 00:11:40,320
+lines do not have to remain to be parallel, but straight lines will always remain straight.
+
+93
+00:11:40,320 --> 00:11:47,400
+What have we learned in this video and lecture, we learned about 2D points and 2D line, in
+
+94
+00:11:47,400 --> 00:11:54,339
+particular we learned about homogeneous or projective coordinates for points and lines,
+
+95
+00:11:54,339 --> 00:12:01,800
+and we saw that these coordinates drastically facilitate the study of 2D transformations.
+
+96
+00:12:01,800 --> 00:12:08,500
+In particular we studied transformations like the translation, the ridged body motion,
+
+97
+00:12:08,500 --> 00:12:17,110
+the similarity transformation, the affine transformation and the most general case the homography or
+
+98
+00:12:17,110 --> 00:12:20,470
+projective transformation.
+
+99
+00:12:20,470 --> 00:12:29,500
+In the next video we will study these entities and aspects on a particular example. And this
+
+100
+00:12:29,500 --> 00:12:37,500
+will then lead us to an exercise, where you can learn to apply these techniques in geometry.
+
+101
+00:12:37,500 --> 23:59:59,999
+Thank you
+

@@ -1,0 +1,408 @@
+1
+00:00:00,600 --> 00:00:02,400
+Welcome back everybody.
+
+2
+00:00:02,400 --> 00:00:09,910
+So in this video I will give you a short example on 2D geometry for a planar robot.
+
+3
+00:00:09,910 --> 00:00:16,700
+So imagine that we have a simple robot being located somewhere in 2D space.
+
+4
+00:00:16,700 --> 00:00:23,769
+And then we could describe its pose by its position in x and y direction,
+
+5
+00:00:23,769 --> 00:00:30,999
+and its rotation around the yaw axis.
+
+6
+00:00:30,999 --> 00:00:38,359
+This means that this robot has 3 degrees of freedom, namely two 2D translation and a 1D
+
+7
+00:00:38,359 --> 00:00:41,519
+rotation or orientation.
+
+8
+00:00:41,519 --> 00:00:47,749
+And as we have seen in the previous video we could represent such a pose by using a
+
+9
+00:00:47,749 --> 00:00:53,190
+euclidian transformation matrix, consisting of a rotation part and a translation part.
+
+10
+00:00:53,190 --> 00:01:00,850
+The rotation part would just encode this heading angle Psi here. And the translation
+
+11
+00:01:00,850 --> 00:01:05,939
+vector would encode the position in x and y direction.
+
+12
+00:01:05,939 --> 00:01:14,700
+And this is a 3 by 3 vector, this matrix is also called SE(2),
+
+13
+00:01:14,700 --> 00:01:21,290
+standing for special euclidian transformation of 2 dimensions.
+
+14
+00:01:21,290 --> 00:01:25,189
+And now just to fill a few numbers, to make it more concrete, imagine the robot stands
+
+15
+00:01:25,189 --> 00:01:35,420
+now at x position of 0.7, y position equals 0.5, and its heading 45 degrees to the upper right.
+
+16
+00:01:35,420 --> 00:01:41,189
+And then, this would mean that the robot pose could be described by the following matrix
+
+17
+00:01:41,189 --> 00:01:45,619
+as shown here on the slide.
+
+18
+00:01:45,619 --> 00:01:50,369
+We have now the robot standing somewhere in space. And now, one common task is now that
+
+19
+00:01:50,369 --> 00:01:58,840
+we want to know where the robot would end up, if it would move one meter forward.
+
+20
+00:01:58,840 --> 00:02:03,630
+Another important question that we look in afterwards is: what motion actually do we need
+
+21
+00:02:03,630 --> 00:02:13,600
+to execute to reach a certain position? Like for example, to move back to the origin of our world.
+
+22
+00:02:13,600 --> 00:02:20,100
+But now, to answer the first question. So imagine the robot would move forward by 1 meter.
+
+23
+00:02:20,100 --> 00:02:23,970
+Then, what is its position afterwards?
+
+24
+00:02:23,970 --> 00:02:28,530
+And we could of course first describe a point being located 1 meter in front of the robot
+
+25
+00:02:28,530 --> 00:02:33,000
+in its local coordinate frame, which would mean that we could say: this is a vector of
+
+26
+00:02:33,000 --> 00:02:40,000
+1, 0, and if you look at the homogeneous or augmented coordinates than it would be 1, 0, 1.
+
+27
+00:02:40,000 --> 00:02:46,780
+And this would give us a vector in the local coordinate system of the robot.
+
+28
+00:02:46,780 --> 00:02:51,620
+And if we want to convert this point to global coordinates, then we can just multiply it
+
+29
+00:02:51,620 --> 00:02:59,650
+through the robot pose being described by this matrix we have computed before. So we
+
+30
+00:02:59,650 --> 00:03:08,300
+would multiply this vector 1, 0, 1, and obtain then the coordinate 1.41, 1.21, 1, and this
+
+31
+00:03:08,300 --> 00:03:18,890
+would mean that the robot would end up at the location 1.4 meters, 1.2 meters away from the origin.
+
+32
+00:03:18,890 --> 00:03:24,120
+So this transformation is also known as a transformation from local to global coordinates.
+
+33
+00:03:24,120 --> 00:03:29,500
+Sometimes, as I have already indicated, we need to do the inverse, so we have global
+
+34
+00:03:29,500 --> 00:03:34,340
+coordinates and we want to know in the local coordinate frame of the robot where these
+
+35
+00:03:34,340 --> 00:03:37,810
+coordinates are, relative to the robot.
+
+36
+00:03:37,810 --> 00:03:43,850
+So how can we transform now instead,  global coordinates to local coordinates.
+
+37
+00:03:43,850 --> 00:03:49,610
+So in the first example we've transformed local coordinates to global coordinates, by
+
+38
+00:03:49,610 --> 00:03:56,260
+multiplying the robot pose with the local coordinates and now of course we can just
+
+39
+00:03:56,260 --> 00:04:03,230
+reverse this equation to obtain local coordinates from global coordinates. For that we need
+
+40
+00:04:03,230 --> 00:04:11,310
+to inverse the robot pose, and because of the special form, this robot pose is euclidian,
+
+41
+00:04:11,310 --> 00:04:21,810
+we can specify the inverse directly because the rotation part can just be transposed.
+
+42
+00:04:21,810 --> 00:04:27,189
+The rotation part or rotation matrix as you remember is an orthonormal matrix, and that
+
+43
+00:04:27,189 --> 00:04:32,180
+has the property to get the inverse you can just take the transpose of it.
+
+44
+00:04:32,180 --> 00:04:39,759
+And similarly we can compute the new translation just by taking the transpose of the rotation
+
+45
+00:04:39,759 --> 00:04:43,050
+times the translation, and by flipping the sign.
+
+46
+00:04:43,050 --> 00:04:54,610
+And in this way we obtain now a very efficient way of transforming global coordinates to local coordinates.
+
+47
+00:04:54,610 --> 00:05:02,169
+Now, this was now just referring to points in front of the robot. We can of course also
+
+48
+00:05:02,169 --> 00:05:08,360
+do the same for motions, that means for transformations. For example, imagine that the robot moves
+
+49
+00:05:08,360 --> 00:05:15,099
+forward by 20 centimeters and 10 centimeters to the left and then additionally also turns by
+
+50
+00:05:15,099 --> 00:05:19,509
+10 degrees. And then, this motion can again be described
+
+51
+00:05:19,509 --> 00:05:25,740
+by a euclidian transformation that we would have to apply. So by filling in these values
+
+52
+00:05:25,740 --> 00:05:35,749
+we can again obtain a certain euclidian transformation that describes the robot motion.
+
+53
+00:05:35,749 --> 00:05:42,069
+And if you want to compute now the final pose of the robot, after executing this motion,
+
+54
+00:05:42,069 --> 00:05:50,050
+we can just concatenate the previous robot pose X times the motion capital U. And from
+
+55
+00:05:50,050 --> 00:05:54,900
+there obtain again a certain euclidian transformation,
+
+56
+00:05:54,900 --> 00:06:02,879
+that contains the pose after the robot has executed this motion.
+
+57
+00:06:02,879 --> 00:06:09,110
+Of course, it is important here to execute these transformations in the right order, so it's
+
+58
+00:06:09,110 --> 00:06:16,460
+not the same, AB is not the same as BA. It's very clear that this must be the case,
+
+59
+00:06:16,460 --> 00:06:20,729
+imagine that you move 1 meter forward and then turn 90 degrees to the left, as illustrated
+
+60
+00:06:20,729 --> 00:06:25,969
+here with the red arrow. Is clearly not the same as if you would first turn by 90 degrees
+
+61
+00:06:25,969 --> 00:06:32,100
+and then move 1 meter forward. So it is very important to remember that
+
+62
+00:06:32,100 --> 00:06:38,449
+order matters for concatenating transformations.
+
+63
+00:06:38,449 --> 00:06:45,379
+And this now brings us to so called robot odometry, because very often we want to estimate
+
+64
+00:06:45,379 --> 00:06:52,259
+the robot motion from it sensors or from information that we have. And there are different ways
+
+65
+00:06:52,259 --> 00:06:59,139
+of obtaining such a robot motion. First of all, of course we know typically what motion
+
+66
+00:06:59,139 --> 00:07:04,759
+commands we gave to the robot, of course we never know exactly whether these controls
+
+67
+00:07:04,759 --> 00:07:10,080
+have been executed properly, but typically from the controls that we give, for example
+
+68
+00:07:10,080 --> 00:07:14,620
+from the joystick commands that we send to the quadrotor we can make certain predictions
+
+69
+00:07:14,620 --> 00:07:18,759
+about the resulting robot motion that we would expect.
+
+70
+00:07:18,759 --> 00:07:25,969
+Another option of course is to use odometry sensors like wheel encoders, this is harder
+
+71
+00:07:25,969 --> 00:07:32,710
+on quadrotors, but for wheel robots you could have wheel encoders that just count the number
+
+72
+00:07:32,710 --> 00:07:39,389
+of wheel spins either of the motor or of the wheel. And then you could use that to derive
+
+73
+00:07:39,389 --> 00:07:46,809
+the robot motion that the robot did. The other option is to use a velocity sensor,
+
+74
+00:07:46,809 --> 00:07:52,680
+and this is for example what the ArDrone has with its down looking camera.
+
+75
+00:07:52,680 --> 00:07:58,589
+So this is a sensor that gives us the current velocity of the robot, and then by integrating
+
+76
+00:07:58,589 --> 00:08:09,759
+the velocities over time we can again determine the robot motion in a certain time interval.
+
+77
+00:08:09,759 --> 00:08:15,180
+And this process of integrating the odometry is also called dead reckoning, and in principle
+
+78
+00:08:15,180 --> 00:08:20,330
+it's just a mathematical procedure to determine the present location of the vehicle or of
+
+79
+00:08:20,330 --> 00:08:29,240
+a robot from its odometry readings, whatever those are.
+
+80
+00:08:29,240 --> 00:08:36,729
+This can be usually achieved by using the estimated or measured velocities and integrating
+
+81
+00:08:36,729 --> 00:08:43,750
+that over the elapsed time. So for example, and for being able to do that
+
+82
+00:08:43,750 --> 00:08:49,790
+you typically need a motion model that tells you how the controls or the IMU readings or
+
+83
+00:08:49,790 --> 00:08:56,250
+velocity readings from your sensor can be translated into the robot motion between two
+
+84
+00:08:56,250 --> 00:09:00,430
+time steps. Such a motion model usually takes as input
+
+85
+00:09:00,430 --> 00:09:08,900
+the previous robot pose and the issued control command or the odometry readings and computes
+
+86
+00:09:08,900 --> 00:09:14,590
+from there the new robot pose X at time step t.
+
+87
+00:09:14,590 --> 00:09:19,310
+And of course, you have lots of such time steps, usually IMU readings arrive
+
+88
+00:09:19,310 --> 00:09:26,490
+at 200 Hertz, very frequently. And then you need to integrate them up to be able to make
+
+89
+00:09:26,490 --> 00:09:29,880
+predictions of the current pose of the robot.
+
+90
+00:09:29,880 --> 00:09:38,320
+And this already brings us to the next exercise, so we recorded some flight data from a real
+
+91
+00:09:38,320 --> 00:09:45,320
+flight of a Parrot ArDrone quadrotor. And we extracted the IMU readings, which contain
+
+92
+00:09:45,320 --> 00:09:52,640
+the horizontal speed of the robot in x and y direction, in its local frame, and the angle
+
+93
+00:09:52,640 --> 00:09:58,540
+of speed, around its vertical axis.
+
+94
+00:09:58,540 --> 00:10:04,240
+And from these three parameters we want to infer the position and orientation of the
+
+95
+00:10:04,240 --> 00:10:10,060
+robot in the global frame, at every point in time. And your task now is to integrate these
+
+96
+00:10:10,060 --> 00:10:19,710
+values to obtain the robot pose and the trajectory that the robot traversed from there.
+
+97
+00:10:19,710 --> 00:10:23,810
+So to summarize the things that we've looked at in this video:
+
+98
+00:10:23,810 --> 00:10:26,900
+we've looked at 2D robot poses,
+
+99
+00:10:26,900 --> 00:10:30,700
+we've looked at the conversion between local and global coordinate frames,
+
+100
+00:10:30,700 --> 00:10:34,830
+we also looked at the concatenation of motions
+
+101
+00:10:34,830 --> 00:10:38,030
+and then we have introduced the concepts of odometry,
+
+102
+00:10:38,030 --> 23:59:59,999
+and how odometry readings can be used to infer robot motions and then again robot poses.
+

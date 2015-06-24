@@ -1,0 +1,1044 @@
+1
+00:00:00,780 --> 00:00:04,210
+Hello and welcome everybody to lecture video 7.1.
+
+2
+00:00:04,210 --> 00:00:11,049
+In this video we will look at 2D motion estimation in camera images and this will then form the
+
+3
+00:00:11,049 --> 00:00:14,789
+basis for visual odometry that we will then introduce in the next video.
+
+4
+00:00:14,789 --> 00:00:23,940
+So just as a quick recap, remember again how a camera works. We have 3D objects in space
+
+5
+00:00:23,940 --> 00:00:30,490
+and those objects are imaged by a camera, by a projective camera.
+
+6
+00:00:30,490 --> 00:00:36,559
+And we modeled this using a pinhole camera model in week three.
+
+7
+00:00:36,559 --> 00:00:44,730
+The idea is that we have a point in 3D and this point gets projected onto an image plane
+
+8
+00:00:44,730 --> 00:00:50,850
+and this relationship between this 3D and the 2D point on the image plane is given by
+
+9
+00:00:50,850 --> 00:00:57,739
+the camera intrinsic matrix K. And then at this point on the image plane
+
+10
+00:00:57,739 --> 00:01:05,909
+we have a light sensitive cell that measures the intensity and this intensity is then being
+
+11
+00:01:05,909 --> 00:01:10,659
+read out and this gives us our digital image.
+
+12
+00:01:10,659 --> 00:01:16,360
+So from the mathematical side this means that we can define an image now as a function that
+
+13
+00:01:16,360 --> 00:01:24,030
+maps this image plane to intensity values. Of course, if we have a color camera then this
+
+14
+00:01:24,030 --> 00:01:28,990
+image function would map to a 3-dimensional vector where the components then correspond
+
+15
+00:01:28,990 --> 00:01:37,789
+to the red, green, and blue intensity. Realistically of course this image function
+
+16
+00:01:37,789 --> 00:01:43,990
+is only define on a rectangle because it's only there where you have your sensor.
+
+17
+00:01:43,990 --> 00:01:50,820
+And then, this dimension is defined by the width and the height of your image.
+
+18
+00:01:50,820 --> 00:01:55,710
+When we are talking about digital images then of course this image function is only sampled
+
+19
+00:01:55,710 --> 00:02:04,210
+at discrete locations, so if we want for example evaluate this image function at a location
+
+20
+00:02:04,210 --> 00:02:09,419
+somewhere in between then we will have to interpolate between these sampled values.
+
+21
+00:02:09,419 --> 00:02:15,220
+And we need to take this into account when we need to compute the derivatives and so
+
+22
+00:02:15,220 --> 00:02:19,150
+on that this is done in a proper way.
+
+23
+00:02:19,150 --> 00:02:27,140
+This also means that digital images of course can be represented as a matrix. For example
+
+24
+00:02:27,140 --> 00:02:31,650
+enumerated from left to right and top to bottom as we know it.
+
+25
+00:02:31,650 --> 00:02:37,760
+So back now to our original problem of estimating the 2D motion of an image. The problem there
+
+26
+00:02:37,760 --> 00:02:45,959
+is that we assume that we are given two camera images, probably to consecutive images f_0
+
+27
+00:02:45,959 --> 00:02:51,549
+and f_1. And we assume that the camera has moved a little bit in between and so our goal
+
+28
+00:02:51,549 --> 00:02:58,830
+now is to estimate the camera motion u in between these two images. And for the moment
+
+29
+00:02:58,830 --> 00:03:06,140
+we assume that the camera only moves in the xy-plane, so there is no rotation and it's
+
+30
+00:03:06,140 --> 00:03:12,400
+a pure motion in the image plane. And we will then later see how this extends to 3D.
+
+31
+00:03:12,400 --> 00:03:17,689
+But this means at the moment that we can represent this camera motion by a 2-dimensional vector
+
+32
+00:03:17,689 --> 00:03:24,670
+u that just describes the translation along x-axis and y-axis.
+
+33
+00:03:24,670 --> 00:03:30,849
+And now, the general idea is as follows, we define an error metric that describes how
+
+34
+00:03:30,849 --> 00:03:37,349
+well the two images match, given a particular motion vector. And then, the second step is
+
+35
+00:03:37,349 --> 00:03:45,189
+that we need to find the optimal motion vector that yields the lowest error of this error function E.
+
+36
+00:03:45,189 --> 00:03:53,290
+And there are different choices here for the error metric. The most common one is called
+
+37
+00:03:53,290 --> 00:04:01,909
+the sum of squared differences abbreviated as SSD and there the idea is that we directly
+
+38
+00:04:01,909 --> 00:04:08,799
+look at the differences in the intensities. So we're summing over all pixels but for every
+
+39
+00:04:08,799 --> 00:04:17,220
+pixel we take the difference between the intensity from the first image f_0, and then, from the
+
+40
+00:04:17,220 --> 00:04:24,300
+intensity in the second image f_1 at this pixel plus this motion vector u.
+
+41
+00:04:24,300 --> 00:04:28,650
+And this difference is then squared and summed up and this is why it's called the sum of
+
+42
+00:04:28,650 --> 00:04:31,400
+squared differences.
+
+43
+00:04:31,400 --> 00:04:40,000
+And just as a shorthand because we will need this later we call this difference term here
+
+44
+00:04:40,000 --> 00:04:48,650
+the residual error. And by introducing this equation for SSD this becomes much shorter
+
+45
+00:04:48,650 --> 00:04:55,289
+because it is just a sum over the squared residual errors.
+
+46
+00:04:55,289 --> 00:05:00,250
+And now of course, one problem with SSD is that, especially when we're talking about
+
+47
+00:05:00,250 --> 00:05:06,400
+digital images that our images have only finite size.
+
+48
+00:05:06,400 --> 00:05:14,710
+And this might mean as soon as we run out of the image or if we move one image with respect
+
+49
+00:05:14,710 --> 00:05:22,380
+to the other one, then the overlap gets smaller and smaller because this happens. The error
+
+50
+00:05:22,380 --> 00:05:28,669
+by itself gets smaller because you can't compute any error of pixels that do not overlap.
+
+51
+00:05:28,669 --> 00:05:35,750
+So this means that the standard SSD has a bias towards smaller overlaps, so it prefers
+
+52
+00:05:35,750 --> 00:05:44,289
+actually to shift apart both images to have zero overlap and thus zero error.
+
+53
+00:05:44,289 --> 00:05:50,340
+This means that the standard SSD is not enough generally, but a very simple solution is then just to
+
+54
+00:05:50,340 --> 00:05:57,319
+divide this SSD error by the overlap area, so this is normalized out. And this is then
+
+55
+00:05:57,319 --> 00:06:04,919
+called the root mean square error where we just take this error divide it by the number
+
+56
+00:06:04,919 --> 00:06:11,319
+of pixels and take the square root. A different way for computing this error term
+
+57
+00:06:11,319 --> 00:06:17,789
+is to use a cross correlation instead of minimizing the differences we seek for maximizing the
+
+58
+00:06:17,789 --> 00:06:21,910
+products of both images. The intuition behind that is that we are trying
+
+59
+00:06:21,910 --> 00:06:26,990
+to align both images, and so when they are align well we would assume that the correlate
+
+60
+00:06:26,990 --> 00:06:33,539
+very well. And this means then that the product between the two images is actually maximal.
+
+61
+00:06:33,539 --> 00:06:38,330
+So you can think of this as if you have somewhere bright spots in your image, say a white line,
+
+62
+00:06:38,330 --> 00:06:47,949
+then when this white line coincides with the line from the second image, then these
+
+63
+00:06:47,949 --> 00:06:59,819
+correlating pixels will yield a very large value in this cost term, and then, indicate a good correspondence.
+
+64
+00:06:59,819 --> 00:07:05,759
+One problem with normal cross correlation is that the absolute value of this error function
+
+65
+00:07:05,759 --> 00:07:11,099
+depends strongly on the content of your image. So if you have white or very bright images
+
+66
+00:07:11,099 --> 00:07:20,069
+then this cross correlation will yield a very large number. And if you're looking at a very
+
+67
+00:07:20,069 --> 00:07:30,199
+dark scene then automatically then this term will be compared relatively low.
+
+68
+00:07:30,199 --> 00:07:36,580
+And therefore, it's desirable to normalize that somehow, then one forward extension is
+
+69
+00:07:36,580 --> 00:07:42,180
+the so called normalized cross correlation where you subtract the mean value of your
+
+70
+00:07:42,180 --> 00:07:49,520
+images from both input images and you divide by the variance of both images.
+
+71
+00:07:49,520 --> 00:07:55,780
+And this automatically gives you the score between -1 and 1, and then, it's easier to
+
+72
+00:07:55,780 --> 00:07:59,930
+interpret how good your match actually is between the two.
+
+73
+00:07:59,930 --> 00:08:05,930
+And one huge advantage in contrast to the SSD is that the normalized cross correlation
+
+74
+00:08:05,930 --> 00:08:10,659
+is much less sensitive to illumination changes and the illumination changes of course can
+
+75
+00:08:10,659 --> 00:08:15,949
+happen quite frequently if your brightness in the room changes or the scene you are looking
+
+76
+00:08:15,949 --> 00:08:21,650
+at changes. Then the camera might decide to increase the gain or reduce or increase the
+
+77
+00:08:21,650 --> 00:08:31,580
+shutter time, and then, SSD will not be able to match the images very well.
+
+78
+00:08:31,580 --> 00:08:41,919
+So back to our algorithm, so we have now defined an error metric E that we can use to evaluate
+
+79
+00:08:41,919 --> 00:08:46,300
+how good a particular match is. And now we need to find a motion vector that
+
+80
+00:08:46,300 --> 00:08:50,020
+actually minimize this error function.
+
+81
+00:08:50,020 --> 00:08:55,950
+And there are different ways of doing this, one option of course is to do a full search
+
+82
+00:08:55,950 --> 00:09:00,800
+in the neighborhood. So if you can make assumptions on how far your image probably has shifted
+
+83
+00:09:00,800 --> 00:09:08,220
+then you can do a brute force search for the minimum. This is actually sometimes done because
+
+84
+00:09:08,220 --> 00:09:12,590
+this guarantees that you are actually finding the right minimum.
+
+85
+00:09:12,590 --> 00:09:18,450
+But in most cases this is not necessary and people just run a gradient descent like approach
+
+86
+00:09:18,450 --> 00:09:24,410
+our a Gauss-Newton method and there are even ways when to make sure that even if you have
+
+87
+00:09:24,410 --> 00:09:32,400
+larger motions to still find the right minimum using a hierarchical decomposition.
+
+88
+00:09:32,400 --> 00:09:39,320
+So the most common type actually is to run a gradient based minimization method call
+
+89
+00:09:39,320 --> 00:09:43,160
+Gauss-Newton. This was introduced by Lucas and Kanade in
+
+90
+00:09:43,160 --> 00:09:49,360
+1981 and this is probably the most famous and most popular method for tracking motion
+
+91
+00:09:49,360 --> 00:09:54,960
+in 2D images and it's more over all extremely efficient.
+
+92
+00:09:54,960 --> 00:10:02,020
+So the general idea behind Gauss-Newton minimization is that we linearize the residuals or the
+
+93
+00:10:02,020 --> 00:10:05,890
+error function with respect to the camera motion that we have.
+
+94
+00:10:05,890 --> 00:10:11,610
+This then yields us a quadratic error function that we can derive and from which we can set
+
+95
+00:10:11,610 --> 00:10:17,580
+the derivative to zero. And then, this gives us the normal equations
+
+96
+00:10:17,580 --> 00:10:25,380
+that we can solve with inverting this matrix.
+
+97
+00:10:25,380 --> 00:10:31,230
+So now from a mathematical side, we start out again with this SSD error function, remember
+
+98
+00:10:31,230 --> 00:10:37,130
+that we just take the difference between the two images. We shift the second image by this
+
+99
+00:10:37,130 --> 00:10:43,820
+vector u take the difference, then compute the square of that and then sum over all pixels x.
+
+100
+00:10:43,820 --> 00:10:46,210
+And this term we now want to linearize in
+
+101
+00:10:46,210 --> 00:10:53,860
+u, so we add a small increment to our current estimate of u, so we evaluate it at u plus
+
+102
+00:10:53,860 --> 00:11:00,880
+delta u, and then, we make an approximation with respect to this delta u.
+
+103
+00:11:00,880 --> 00:11:06,380
+So this Taylor expansion then looks as follows: the insight here is that this delta u only
+
+104
+00:11:06,380 --> 00:11:13,790
+appears in this term f_1, f_0 is not shifted only f_1 is shifted by this delta u and so we can
+
+105
+00:11:13,790 --> 00:11:23,630
+approximate this nonlinear function by evaluation f_1 at x_i plus u, at the original point plus
+
+106
+00:11:23,630 --> 00:11:32,020
+the Jacobian evaluated at x_i plus u times our increment delta u.
+
+107
+00:11:32,020 --> 00:11:39,690
+And this Jacobian is nothing else as the derivative or the gradient of the image evaluate at this
+
+108
+00:11:39,690 --> 00:11:46,140
+particular location x_i plus u. And the gradient is just defined as the partial derivative
+
+109
+00:11:46,140 --> 00:11:53,700
+of this image f_1 with respect to x and the partial derivative of this image with respect to y.
+
+110
+00:11:53,700 --> 00:12:00,950
+Now of course you want to minimize this approximated error function. And as you know, at the minimum
+
+111
+00:12:00,950 --> 00:12:06,100
+of the function the derivative has to be zero so for finding the minimum we can actually
+
+112
+00:12:06,100 --> 00:12:11,540
+now derive this error function and set its derivative then to zero.
+
+113
+00:12:11,540 --> 00:12:17,040
+And this is not very complicated so if you want to try this out by yourself just go ahead
+
+114
+00:12:17,040 --> 00:12:23,170
+and if you summarize the terms accordingly, then you end up with this very linear form
+
+115
+00:12:23,170 --> 00:12:24,580
+here shown in the middle.
+
+116
+00:12:24,580 --> 00:12:31,840
+We obtain this 2A times delta u plus 2b has to be zero. And then this individual terms
+
+117
+00:12:31,840 --> 00:12:39,630
+are composed by these Jacobians. And as you remember from this last slide this Jacobian
+
+118
+00:12:39,630 --> 00:12:47,770
+is nothing else then the image gradient actually so these matrix A and the vector b can directly
+
+119
+00:12:47,770 --> 00:12:56,580
+be directly computed from the image gradients where this f_x here stands for the second image
+
+120
+00:12:56,580 --> 00:13:04,460
+derived with respect to x, f_y stands for the partial derivative with respect to y,
+
+121
+00:13:04,460 --> 00:13:11,840
+and this f_t here is actually just the difference between the two images, some people also call
+
+122
+00:13:11,840 --> 00:13:15,480
+that the temporal derivative if your looking at consecutive images.
+
+123
+00:13:15,480 --> 00:13:25,130
+But now that we have such a simple linear system that we need to solve, we can directly
+
+124
+00:13:25,130 --> 00:13:34,380
+invert this matrix A or solve it directly using the Gauss elimination method.
+
+125
+00:13:34,380 --> 00:13:40,000
+And now the cool thing is that all of the computations that we have to do to find a
+
+126
+00:13:40,000 --> 00:13:47,100
+minimum are extremely efficient because we just need to evaluate the image gradients
+
+127
+00:13:47,100 --> 00:13:53,440
+and sum over them to build this matrix A and b, and then we have to solve a 2 by 2 linear
+
+128
+00:13:53,440 --> 00:13:58,050
+equation and that virtually costs no time.
+
+129
+00:13:58,050 --> 00:14:04,540
+So one strong assumption of course that we have here is that we assume that the image
+
+130
+00:14:04,540 --> 00:14:12,310
+gradient is actually meaningful. And this of course only is meaningful or this Taylor
+
+131
+00:14:12,310 --> 00:14:18,330
+approximation is only valid as long as we not moving away too far from our linearization
+
+132
+00:14:18,330 --> 00:14:24,250
+point, and then, of course this depends a little bit on our image how well this linear
+
+133
+00:14:24,250 --> 00:14:29,680
+approximation actually holds. But it's clear that the further we actually
+
+134
+00:14:29,680 --> 00:14:34,440
+move away or the further our image patch is shifted the more difficult it will be for such
+
+135
+00:14:34,440 --> 00:14:36,980
+a method to find the right minimum.
+
+136
+00:14:36,980 --> 00:14:49,020
+And now, one very easy and often used method for enlarging this convergence radius is to
+
+137
+00:14:49,020 --> 00:14:55,090
+perform a so called hierarchical motion estimation where you are not directly estimating the
+
+138
+00:14:55,090 --> 00:15:01,980
+motion on the image itself, but you scale down or you down sample your image in a pyramid
+
+139
+00:15:01,980 --> 00:15:07,080
+where every layer of the pyramid halves the resolution.
+
+140
+00:15:07,080 --> 00:15:14,760
+So instead of having 640 by 480 you would have at the next layer a resolution of 320
+
+141
+00:15:14,760 --> 00:15:24,170
+by 240, and then, 160 by 120 and so on. And at these higher levels even a larger motion
+
+142
+00:15:24,170 --> 00:15:29,900
+even on the original image appears just as a motion of 1 or 2 pixels. And then our linearization
+
+143
+00:15:29,900 --> 00:15:36,710
+holds again and then we can run this Taylor approximation.
+
+144
+00:15:36,710 --> 00:15:41,060
+And now, the idea of this hierarchical motion estimation is that we estimate the motion first
+
+145
+00:15:41,060 --> 00:15:48,640
+on a very coarse level maybe 3 or 4 levels higher than our original image. And then,
+
+146
+00:15:48,640 --> 00:15:54,680
+when we determine the motion there we use that as the initial initialization for the
+
+147
+00:15:54,680 --> 00:16:03,470
+Taylor approximation for the next finer level. And in this way you can improve the convergence
+
+148
+00:16:03,470 --> 00:16:05,920
+a lot.
+
+149
+00:16:05,920 --> 00:16:12,310
+Another interesting thing to note here is that we can also evaluate the quality of our
+
+150
+00:16:12,310 --> 00:16:21,580
+estimate by looking at this matrix A. This looks as follows, imagine that our observed
+
+151
+00:16:21,580 --> 00:16:29,290
+image is of course noisy. So it is a noisy observation of our true image or true pixel
+
+152
+00:16:29,290 --> 00:16:37,950
+x_i and every pixel adds then a small error term that is again normally distributed according
+
+153
+00:16:37,950 --> 00:16:44,300
+to a certain variance. And then it can be shown that this noise in
+
+154
+00:16:44,300 --> 00:16:50,260
+the image actually results in an uncertainty of the motion estimate that has a covariance
+
+155
+00:16:50,260 --> 00:17:03,660
+of this sigma squared times A^(-1). So by evaluating this matrix A or the covariance
+
+156
+00:17:03,660 --> 00:17:12,849
+of our motion estimate is inversely related to this matrix A times the variance of our
+
+157
+00:17:12,849 --> 00:17:18,140
+image noise sigma square.
+
+158
+00:17:18,140 --> 00:17:26,020
+Now this method that you've just seen is actually widely used, everybody of you whenever you
+
+159
+00:17:26,020 --> 00:17:33,760
+touch an optical mouse runs this algorithm directly on a chip, it can of course be implemented
+
+160
+00:17:33,760 --> 00:17:40,420
+easily on a CPU but it can also be implemented in hardware and then it becomes very energy
+
+161
+00:17:40,420 --> 00:17:42,540
+efficient and so on.
+
+162
+00:17:42,540 --> 00:17:48,050
+So a typical mouse sensor actually runs at very high image rates, this has the advantage
+
+163
+00:17:48,050 --> 00:17:54,910
+that even if you seem to move the mouse very fast the motion between two consecutive images
+
+164
+00:17:54,910 --> 00:18:02,420
+is of course extremely small. And then this Taylor approximation holds very well.
+
+165
+00:18:02,420 --> 00:18:09,740
+And gamer mice for example run at even higher frame rates, then you get an even better resolution
+
+166
+00:18:09,740 --> 00:18:16,840
+or motion estimate. And actually a computer mouse just has a very
+
+167
+00:18:16,840 --> 00:18:23,110
+low resolution camera you don't need to much here, some even go down to 16 by 16 some have
+
+168
+00:18:23,110 --> 00:18:28,680
+a little bit more. But they are very cheap to produce and as I said, everything is already
+
+169
+00:18:28,680 --> 00:18:35,250
+build into the chip then you directly get the x and y velocity that you can send over
+
+170
+00:18:35,250 --> 00:18:40,510
+PS2 or USB to your computer.
+
+171
+00:18:40,510 --> 00:18:46,060
+So this was now a method to align whole images but sometimes you're just interested in the
+
+172
+00:18:46,060 --> 00:18:54,890
+motion of the individual patches within an image, and then, of course the question is which patches or
+
+173
+00:18:54,890 --> 00:18:58,600
+which points in the image can be actually tracked or which patches should we actually
+
+174
+00:18:58,600 --> 00:19:04,800
+track. And it's clear that some patches are much easier to track then others. Obviously
+
+175
+00:19:04,800 --> 00:19:11,840
+if you have a lot of texture it's easier to track than if you don't have texture at all.
+
+176
+00:19:11,840 --> 00:19:18,420
+And so the question is how can we automatically recognize good patches that are easy to track?
+
+177
+00:19:18,420 --> 00:19:27,040
+And just to visualize the different possibilities that we have. If we are looking at a corner
+
+178
+00:19:27,040 --> 00:19:32,530
+point or at a point that has a strong texture in both directions in x and y direction, then
+
+179
+00:19:32,530 --> 00:19:37,590
+our patch is actually easy to track because it is constrained in all directions. However,
+
+180
+00:19:37,590 --> 00:19:46,050
+if we happen to look at a patch that is looking at an edge in the image, then it will be constrained
+
+181
+00:19:46,050 --> 00:19:53,770
+very well in y direction, but the patch can move arbitrarily in x direction just because
+
+182
+00:19:53,770 --> 00:20:01,280
+there is no information in the image that tells us where it exactly was. And the other
+
+183
+00:20:01,280 --> 00:20:08,060
+extreme is that we are looking at a patch within a unicolor region, and then, of course
+
+184
+00:20:08,060 --> 00:20:14,380
+it is not possible at all to track it because all its surroundings will exactly look the same.
+
+185
+00:20:14,380 --> 00:20:25,550
+And just an example how this looks for real this is now a real image taken by a camera.
+
+186
+00:20:25,550 --> 00:20:30,410
+And we again have here this different types of things. For example, if you look at this
+
+187
+00:20:30,410 --> 00:20:38,410
+green, the first, patch at the roof of the house. Then we're getting this problem of
+
+188
+00:20:38,410 --> 00:20:46,540
+an edge, so the energy here depicted on the right, we actually see a valley, so it's not
+
+189
+00:20:46,540 --> 00:20:53,320
+really clear which minimum we should pick if we track this patch. Then the next patch
+
+190
+00:20:53,320 --> 00:21:00,190
+is the red one where we don't have any texture. Here you can see in the surface plot of the
+
+191
+00:21:00,190 --> 00:21:06,200
+energy function it doesn't have a very clear minimum. Of course there always is by definition
+
+192
+00:21:06,200 --> 00:21:15,310
+a minimum, but it's not very easy to find and not very unique.
+
+193
+00:21:15,310 --> 00:21:22,270
+And then, actually a good patch is here shown in blue on the bottom right. And this is a
+
+194
+00:21:22,270 --> 00:21:28,430
+situation where we have lots of texture and where our energy function shows a clear minimum.
+
+195
+00:21:28,430 --> 00:21:32,370
+And these are actually the patches that we are interested in because those patches are
+
+196
+00:21:32,370 --> 00:21:34,190
+easier to track.
+
+197
+00:21:34,190 --> 00:21:42,130
+And now, as we said before we can recognize the quality of our motion estimate from this
+
+198
+00:21:42,130 --> 00:21:51,530
+matrix A, which is also called the Hessian. And so if this matrix A is large then our
+
+199
+00:21:51,530 --> 00:21:57,070
+covariance of our estimate is small which means that we are very well localized and
+
+200
+00:21:57,070 --> 00:22:04,870
+this big and small can also be read off from the eigenvalues from the matrix. So if
+
+201
+00:22:04,870 --> 00:22:12,300
+you compute the eigenvalues lambda_1 and lambda_2 then if these two eigenvalues are very large
+
+202
+00:22:12,300 --> 00:22:17,820
+then we are looking at a corner. If only one of them e.g. if the first one is large and the second one is small then
+
+203
+00:22:17,820 --> 00:22:21,650
+we are looking at an edge. When we are constrained in one direction but not in constrained in
+
+204
+00:22:21,650 --> 00:22:26,610
+the other direction. And both of them are actually small then that means that we have a very high
+
+205
+00:22:26,610 --> 00:22:32,570
+uncertainty in both directions so this is not a good choice for an interest point or
+
+206
+00:22:32,570 --> 00:22:36,320
+a key point.
+
+207
+00:22:36,320 --> 00:22:42,460
+So there have been very corner detectors proposed, so the oldest or most famous one is the Harris
+
+208
+00:22:42,460 --> 00:22:50,330
+detector. It actually does not need eigenvalues because those were complicated to compute
+
+209
+00:22:50,330 --> 00:22:56,560
+in that time so there is a simple approximation where you just have to compute the determinant
+
+210
+00:22:56,560 --> 00:23:07,790
+of this matrix A and the trace of this matrix A. Essentially it is still looking of the product
+
+211
+00:23:07,790 --> 00:23:13,200
+of both eigenvalues and compares that to the squared sum.
+
+212
+00:23:13,200 --> 00:23:20,950
+Later when computers got faster the Shi-Tomasi or Kanade-Lucas corner detector was proposed
+
+213
+00:23:20,950 --> 00:23:27,130
+that just says that if the minimum of the two eigenvalues is larger than a certain constant
+
+214
+00:23:27,130 --> 00:23:31,460
+then we consider this to be a suitable corner.
+
+215
+00:23:31,460 --> 00:23:37,680
+There are other detectors as well like the Förstner detector that can localize a corner
+
+216
+00:23:37,680 --> 00:23:46,590
+even with sub-pixel accuracy this certainly helps if you need highly accurate estimates of points
+
+217
+00:23:46,590 --> 00:23:53,970
+in your image or patches in your image. There are also FAST corners that became very
+
+218
+00:23:53,970 --> 00:24:00,800
+popular over the past years, where you apply a machine learning technique to actually reduce
+
+219
+00:24:00,800 --> 00:24:06,730
+the number of pixels that you have to read out. And this means that the FAST corner detector
+
+220
+00:24:06,730 --> 00:24:14,510
+is extremely fast and even much faster than this Harris detector. Another popular one
+
+221
+00:24:14,510 --> 00:24:21,309
+is the so called Difference of Gaussians that is used in the SIFT feature detector which
+
+222
+00:24:21,309 --> 00:24:29,880
+is even scale invariant. So the Harris detector for example recognizes a corner only at a particular
+
+223
+00:24:29,880 --> 00:24:35,840
+scale. If you would zoom in into a corner then this corner might, given the right zoom,
+
+224
+00:24:35,840 --> 00:24:41,460
+appear as a straight line the Harris detector wouldn't recognize it anymore and
+
+225
+00:24:41,460 --> 00:24:45,770
+the idea of Difference of Gaussians is that you again build this image pyramid and that
+
+226
+00:24:45,770 --> 00:24:52,360
+you search for corners at all levels of the pyramid and this means that you are invariant
+
+227
+00:24:52,360 --> 00:24:56,960
+or at least somewhat invariant to a scale change.
+
+228
+00:24:56,960 --> 00:25:06,000
+Now, we finally come to the Kanade-Lucas-Tomasi tracker one of the most popular and most famous
+
+229
+00:25:06,000 --> 00:25:13,100
+trackers in the world for 2D motion estimation. The algorithm is as follows, we first find
+
+230
+00:25:13,100 --> 00:25:19,430
+the corners in the image typically these Shi-Tomasi corners and we do that in the first frame
+
+231
+00:25:19,430 --> 00:25:27,380
+and then initialize our trackers. So every corner gets a track and then we track
+
+232
+00:25:27,380 --> 00:25:34,980
+this corner from frame to frame using this Taylor approximation from before and this
+
+233
+00:25:34,980 --> 00:25:45,050
+is Gauss-Newton method. And then, if it happens that this matrix A or that the eigenvalues
+
+234
+00:25:45,050 --> 00:25:50,590
+if you're not localized anymore or if the discrepancy gets to large then we delete the
+
+235
+00:25:50,590 --> 00:25:56,630
+track. If we lost too many tracks then we can initialize additional tracks when necessary.
+
+236
+00:25:56,630 --> 00:26:01,460
+This is a costly operation because for that you have to scan the whole image for corners.
+
+237
+00:26:01,460 --> 00:26:07,880
+So we don't want to do that too often, only if the number of tracks gets too low. And
+
+238
+00:26:07,880 --> 00:26:11,720
+then, you repeatedly run the steps 2 to 4.
+
+239
+00:26:11,720 --> 00:26:15,710
+The good news here is that the KLT tracker is extremely efficient so it runs in real-time
+
+240
+00:26:15,710 --> 00:26:22,800
+at CPU so there are many open source implementations of it in OpenCV but there is also a tutorial
+
+241
+00:26:22,800 --> 00:26:28,090
+for Matlab for example and essentially for all languages that you can think off.
+
+242
+00:26:28,090 --> 00:26:34,190
+The KLT tracker only tracks this sparse points in the image but it is also possible with
+
+243
+00:26:34,190 --> 00:26:38,840
+other methods to compute a dense optical flow where you essentially for every pixel in the
+
+244
+00:26:38,840 --> 00:26:45,510
+image find this motion vector u and this is typically a little bit more complicated for
+
+245
+00:26:45,510 --> 00:26:52,210
+that you need more processing power or which at least at the moment requires a GPU.
+
+246
+00:26:52,210 --> 00:27:00,120
+So now to finally demo how this looks like for real this now just a camera video somebody
+
+247
+00:27:00,120 --> 00:27:07,960
+took and then ran a KLT implementation on it. As you can see these red points here are the
+
+248
+00:27:07,960 --> 00:27:12,390
+Shi-Tomasi corners. You can see small numbers if you look carefully those are the track
+
+249
+00:27:12,390 --> 00:27:19,690
+numbers that are be tracked. And when the camera moves the algorithm tries to track
+
+250
+00:27:19,690 --> 00:27:25,730
+them using this approach that we have shown. And of course it can happen that this tracks
+
+251
+00:27:25,730 --> 00:27:30,920
+get lost simply because either they fall out of the image or the matching doesn't work
+
+252
+00:27:30,920 --> 00:27:38,220
+for some reason, we have an over exposure or blur in the image, and then, the tracks
+
+253
+00:27:38,220 --> 00:27:40,700
+might get deleted.
+
+254
+00:27:40,700 --> 00:27:45,230
+So to summarize the video of today, we've looked at 2D motion estimation, we have introduced
+
+255
+00:27:45,230 --> 00:27:50,440
+different cost functions that are typically used, we've shown that this is the
+
+256
+00:27:50,440 --> 00:27:59,580
+technique which is actually used in computer mice. And computer mice look at aligning whole
+
+257
+00:27:59,580 --> 00:28:04,429
+image to the previous image. If you are only interested in small patches then it makes
+
+258
+00:28:04,429 --> 00:28:11,730
+sense to pick good patches for that we looked at corner detectors. And then, we applied
+
+259
+00:28:11,730 --> 00:28:16,490
+that in the KLT tracker to track different regions in the image.
+
+260
+00:28:16,490 --> 00:28:22,630
+And this now will be used, this technique, we will use in the next video to estimate
+
+261
+00:28:22,630 --> 23:59:59,999
+visual odometry for a quadrotor that has a downwards looking camera.
+

@@ -1,0 +1,479 @@
+1
+00:00:00,000 --> 00:00:01,801
+
+2
+00:00:01,801 --> 00:00:02,300
+Hello.
+
+3
+00:00:02,300 --> 00:00:04,620
+And welcome back, everybody, to the second part
+
+4
+00:00:04,620 --> 00:00:06,110
+of the first lecture on autonomous
+
+5
+00:00:06,110 --> 00:00:08,250
+navigation for flying robots.
+
+6
+00:00:08,250 --> 00:00:11,520
+In this video, I will briefly illustrate a few
+
+7
+00:00:11,520 --> 00:00:14,220
+of the use cases of quadrotors and with that
+
+8
+00:00:14,220 --> 00:00:17,430
+motivate why we believe that quadrotors will become really
+
+9
+00:00:17,430 --> 00:00:20,050
+relevant commercially but also scientifically
+
+10
+00:00:20,050 --> 00:00:22,490
+in the near future.
+
+11
+00:00:22,490 --> 00:00:26,050
+So before we start with the more technical applications,
+
+12
+00:00:26,050 --> 00:00:29,140
+let me first ask you to think personally
+
+13
+00:00:29,140 --> 00:00:32,660
+what you would like to use such a quadrotor for.
+
+14
+00:00:32,660 --> 00:00:34,160
+And for the moment, just think of it
+
+15
+00:00:34,160 --> 00:00:37,310
+as an autonomously flying camera.
+
+16
+00:00:37,310 --> 00:00:40,230
+And then, depending on your personal interests,
+
+17
+00:00:40,230 --> 00:00:44,250
+you might come up with the idea that you could film yourself
+
+18
+00:00:44,250 --> 00:00:49,070
+during your next ski run, to have a camera that just follows
+
+19
+00:00:49,070 --> 00:00:51,400
+you automatically or that flies in front of you
+
+20
+00:00:51,400 --> 00:00:54,800
+and takes really nice imagery.
+
+21
+00:00:54,800 --> 00:00:56,870
+In a similar application, quadrotors
+
+22
+00:00:56,870 --> 00:00:59,200
+could also be real life-savers.
+
+23
+00:00:59,200 --> 00:01:02,470
+For example, after an avalanche goes off,
+
+24
+00:01:02,470 --> 00:01:04,200
+you could send out a team of quadrotors
+
+25
+00:01:04,200 --> 00:01:07,910
+to quickly monitor the hill from above
+
+26
+00:01:07,910 --> 00:01:14,540
+to get visual imagery such that the rescue forces can quickly
+
+27
+00:01:14,540 --> 00:01:17,351
+come to the victims and save them.
+
+28
+00:01:17,351 --> 00:01:20,620
+
+29
+00:01:20,620 --> 00:01:23,770
+Similarly, also after nature catastrophes,
+
+30
+00:01:23,770 --> 00:01:26,650
+like a tsunami, of course, or an earthquake,
+
+31
+00:01:26,650 --> 00:01:29,040
+quadrotors are really versatile helpers
+
+32
+00:01:29,040 --> 00:01:32,790
+that can be sent into buildings to inspect them.
+
+33
+00:01:32,790 --> 00:01:34,600
+In particular, if you're not sure
+
+34
+00:01:34,600 --> 00:01:38,990
+whether the building is still safe for humans,
+
+35
+00:01:38,990 --> 00:01:42,910
+if possibly the building could collapse,
+
+36
+00:01:42,910 --> 00:01:45,340
+then you better send in a robot.
+
+37
+00:01:45,340 --> 00:01:47,950
+And quadrotors have the advantage
+
+38
+00:01:47,950 --> 00:01:51,300
+that they are not obstructed by debris on the floor.
+
+39
+00:01:51,300 --> 00:01:53,780
+So imagine you would send in a wheeled robot,
+
+40
+00:01:53,780 --> 00:01:56,800
+then it might get stuck very soon if there
+
+41
+00:01:56,800 --> 00:02:02,200
+are stones or parts of the wall lying on the floor.
+
+42
+00:02:02,200 --> 00:02:04,770
+Similarly, and more interesting for personal use,
+
+43
+00:02:04,770 --> 00:02:08,130
+are quadrotors that you can send above your house,
+
+44
+00:02:08,130 --> 00:02:12,750
+to check for example the roof for damages after a storm.
+
+45
+00:02:12,750 --> 00:02:17,820
+Similarly also for inspecting buildings in general.
+
+46
+00:02:17,820 --> 00:02:21,110
+So for example, bridges have to be inspected on a yearly basis.
+
+47
+00:02:21,110 --> 00:02:24,740
+And that's a quite expensive effort,
+
+48
+00:02:24,740 --> 00:02:30,010
+because you have to have one or two inspectors being
+
+49
+00:02:30,010 --> 00:02:31,740
+transported next to the supporting
+
+50
+00:02:31,740 --> 00:02:34,890
+structure of a bridge to look visually
+
+51
+00:02:34,890 --> 00:02:39,320
+at the state of the pillars.
+
+52
+00:02:39,320 --> 00:02:43,670
+And if you had a very easy to use flying camera for that,
+
+53
+00:02:43,670 --> 00:02:46,910
+then that would save enormous amounts of money and time,
+
+54
+00:02:46,910 --> 00:02:47,850
+obviously.
+
+55
+00:02:47,850 --> 00:02:51,290
+Another application is in remote farming.
+
+56
+00:02:51,290 --> 00:02:54,950
+You could send out quadrotors quickly to crop fields
+
+57
+00:02:54,950 --> 00:02:57,610
+to check whether addition watering is needed,
+
+58
+00:02:57,610 --> 00:03:01,760
+whether the plants are healthy, to monitor a field in general.
+
+59
+00:03:01,760 --> 00:03:06,620
+But then even if you detect certain diseases,
+
+60
+00:03:06,620 --> 00:03:12,970
+you could spray certain substances
+
+61
+00:03:12,970 --> 00:03:18,567
+on the plants very precisely and exactly the right amount based
+
+62
+00:03:18,567 --> 00:03:19,650
+on your visual inspection.
+
+63
+00:03:19,650 --> 00:03:22,220
+
+64
+00:03:22,220 --> 00:03:24,900
+Another huge topic, of course, is to map,
+
+65
+00:03:24,900 --> 00:03:26,730
+to use quadrotors to map buildings,
+
+66
+00:03:26,730 --> 00:03:29,370
+both from the outside and the inside.
+
+67
+00:03:29,370 --> 00:03:31,280
+I guess most of you will already have
+
+68
+00:03:31,280 --> 00:03:33,210
+taken measurements of your own apartment.
+
+69
+00:03:33,210 --> 00:03:35,840
+If you're moving to a new flat, you
+
+70
+00:03:35,840 --> 00:03:38,490
+have to take all the measurements of the furniture
+
+71
+00:03:38,490 --> 00:03:41,120
+and of the rooms and doors.
+
+72
+00:03:41,120 --> 00:03:42,990
+And if you had an automatic tool,
+
+73
+00:03:42,990 --> 00:03:47,820
+like a small quadrotor, that you could send in a room
+
+74
+00:03:47,820 --> 00:03:51,970
+and would generate a 3D map, this would be very helpful.
+
+75
+00:03:51,970 --> 00:03:55,130
+So this helps people, common people like you and me.
+
+76
+00:03:55,130 --> 00:03:57,430
+But it also helps, of course, architects to quickly
+
+77
+00:03:57,430 --> 00:04:02,940
+scan in huge buildings to get such 3D maps.
+
+78
+00:04:02,940 --> 00:04:06,150
+This is also highly relevant for industrial applications.
+
+79
+00:04:06,150 --> 00:04:09,850
+If you look at production sites, then most of the time
+
+80
+00:04:09,850 --> 00:04:12,250
+there is also no accurate floor plan.
+
+81
+00:04:12,250 --> 00:04:15,550
+And similarly, walking around and taking all the measurements
+
+82
+00:04:15,550 --> 00:04:17,870
+can be quite cumbersome.
+
+83
+00:04:17,870 --> 00:04:23,160
+And also if you have three-dimensional structures
+
+84
+00:04:23,160 --> 00:04:25,200
+like pipes and so on, then it's not
+
+85
+00:04:25,200 --> 00:04:30,700
+really easy to create such a map manually.
+
+86
+00:04:30,700 --> 00:04:34,340
+Also very interesting, but still at a quite early stage,
+
+87
+00:04:34,340 --> 00:04:37,040
+are transportation tasks for quadrotors.
+
+88
+00:04:37,040 --> 00:04:42,660
+Amazon launched recently a video showing an octocopter
+
+89
+00:04:42,660 --> 00:04:47,140
+transporting a package to a customer.
+
+90
+00:04:47,140 --> 00:04:49,170
+This was more a proof of concept, of course,
+
+91
+00:04:49,170 --> 00:04:52,280
+because there are so many unresolved legal issues there.
+
+92
+00:04:52,280 --> 00:04:55,970
+
+93
+00:04:55,970 --> 00:04:58,800
+And then also Domino's Pizza showed a video
+
+94
+00:04:58,800 --> 00:05:02,490
+where they delivered a pizza to a client.
+
+95
+00:05:02,490 --> 00:05:04,360
+So while this is still at an early stage,
+
+96
+00:05:04,360 --> 00:05:06,790
+it's clear that with quadrotors, we're
+
+97
+00:05:06,790 --> 00:05:10,580
+actually close to implementing such applications.
+
+98
+00:05:10,580 --> 00:05:12,680
+So with that, I've shown that there
+
+99
+00:05:12,680 --> 00:05:15,390
+are many useful applications for quadrotors.
+
+100
+00:05:15,390 --> 00:05:18,350
+And that it also has a large commercial potential
+
+101
+00:05:18,350 --> 00:05:20,280
+for the future.
+
+102
+00:05:20,280 --> 00:05:23,400
+However, current solutions require typically
+
+103
+00:05:23,400 --> 00:05:26,490
+a skilled human pilot that navigates manually
+
+104
+00:05:26,490 --> 00:05:29,600
+the quadrotor in these applications.
+
+105
+00:05:29,600 --> 00:05:32,730
+And that obviously limits the applicability.
+
+106
+00:05:32,730 --> 00:05:35,070
+This again motivates the main question in this course,
+
+107
+00:05:35,070 --> 00:05:37,820
+namely, how can we increase the autonomy of flying robots?
+
+108
+00:05:37,820 --> 00:05:40,930
+
+109
+00:05:40,930 --> 00:05:44,780
+This brings me down then to our first exercise,
+
+110
+00:05:44,780 --> 00:05:47,150
+interactive exercise that we have prepared for you.
+
+111
+00:05:47,150 --> 00:05:50,750
+So we would like you to propose one or more ideas what
+
+112
+00:05:50,750 --> 00:05:52,510
+you would like to use an autonomous
+
+113
+00:05:52,510 --> 00:05:55,230
+quadrotor for once it exists.
+
+114
+00:05:55,230 --> 00:05:58,120
+And then just write this idea in the message forum.
+
+115
+00:05:58,120 --> 00:06:00,370
+And then vote for your favorite idea.
+
+116
+00:06:00,370 --> 00:06:03,300
+And then we also would like you to discuss there
+
+117
+00:06:03,300 --> 00:06:06,020
+what the particular challenges are of each of these ideas
+
+118
+00:06:06,020 --> 00:06:08,900
+and how large the commercial potential is.
+
+119
+00:06:08,900 --> 00:06:11,470
+And then, based on your proposals,
+
+120
+00:06:11,470 --> 00:06:14,610
+we will discuss the three most popular ideas next week
+
+121
+00:06:14,610 --> 23:59:59,999
+in class.
+

@@ -1,0 +1,936 @@
+1
+00:00:01,400 --> 00:00:05,700
+Hello and welcome everybody to the course Autonomous Navigation for Flying Robots.
+
+2
+00:00:05,700 --> 00:00:10,730
+In the previous videos we have introduces 2D geometry, and then illustrated how that can be
+
+3
+00:00:10,730 --> 00:00:18,870
+used to compute odometry for a 2 dimensional planar robot. Of course, quadrotors live in
+
+4
+00:00:18,870 --> 00:00:25,900
+a 3 dimensional world, so in this video we will now extend that to full 3D. Similar as before
+
+5
+00:00:25,900 --> 00:00:36,500
+we can now define points in 3D. A 3D point of course consists of 3 dimensions for the x, y and z axis.
+
+6
+00:00:36,500 --> 00:00:43,970
+And agian, we can augment such a vector by a 1 in an additional row at the end, which is then called
+
+7
+00:00:43,970 --> 00:00:50,430
+an augmented vector again. We can define homogeneous coordinates or a homogeneous
+
+8
+00:00:50,430 --> 00:00:57,800
+vector that has four elements. And remember, two homogeneous vectors are representing the
+
+9
+00:00:57,800 --> 00:01:06,610
+same point in 3D if and only if they only differ by scale. Using such points we can
+
+10
+00:01:06,610 --> 00:01:11,200
+now a line in 3D. There are different ways of representing lines.
+
+11
+00:01:11,200 --> 00:01:19,400
+A very simple form is to just use 2 points. And the line connecting these two points can
+
+12
+00:01:19,400 --> 00:01:29,040
+then be defined as a linear blending between the coordinates of these two points. So in this formula if Lambda
+
+13
+00:01:29,040 --> 00:01:36,500
+is 0 then we are exactly at point p, and if Lambda is 1 then we are exactly at point q.
+
+14
+00:01:36,500 --> 00:01:42,600
+For any values between 0 and 1, we would interpolate between p and q along line
+
+15
+00:01:42,600 --> 00:01:48,900
+segment joining these two points. And if Lambda can take any real value, then we are moving
+
+16
+00:01:48,900 --> 00:01:53,860
+along the infinite line defined by these two points.
+
+17
+00:01:53,860 --> 00:02:04,200
+We can also define a 3D plane, a 3D plane can be described by 3 parameters, in principal.
+
+18
+00:02:04,200 --> 00:02:14,889
+But it is easier to use the homogeneous representation. So this vector m here, m tilde has 4 coefficients,
+
+19
+00:02:14,889 --> 00:02:22,319
+and if you multiply that with a 3D point, x bar or x tilde, and set it to 0 then this
+
+20
+00:02:22,319 --> 00:02:26,969
+formula defines all points lying on the plane.
+
+21
+00:02:26,969 --> 00:02:33,059
+And again, from this equation you can see that the scale actually doesn't matter. So
+
+22
+00:02:33,059 --> 00:02:39,919
+if you multiply it by a constant then you still getting the same points on the line.
+
+23
+00:02:39,919 --> 00:02:45,879
+Similar as before, we can now normalize this plane equation by saying that the first 3
+
+24
+00:02:45,879 --> 00:02:55,609
+components x and y and z have a length of 1. Then this vector actually corresponds
+
+25
+00:02:55,609 --> 00:03:01,299
+to the normal vector. And if it has length 1 it's a unit normal vector. And then the
+
+26
+00:03:01,299 --> 00:03:09,100
+last coefficient d specifies the distance of the plane from the origin.
+
+27
+00:03:09,100 --> 00:03:17,359
+Then we can also define 3D transformations again. A translation as before can be specified
+
+28
+00:03:17,359 --> 00:03:24,930
+by a multiplication of a 4 by 4 matrix with a vector. For only a translation we would
+
+29
+00:03:24,930 --> 00:03:29,760
+have the identity in the upper left and then the 3 dimensional translation vector in the
+
+30
+00:03:29,760 --> 00:03:36,900
+upper right. And then, if we replace this identity in the
+
+31
+00:03:36,900 --> 00:03:43,000
+upper left by a 3 dimensional rotation matrix, then we obtain an euclidian transform.
+
+32
+00:03:43,000 --> 00:03:51,500
+Elements of this type are also called to be elements of the special euclidian group of dimension 3.
+
+33
+00:03:51,500 --> 00:03:58,559
+Just saying that we are dealing here with rotation and translation at the same time.
+
+34
+00:03:58,559 --> 00:04:03,829
+And as before you can define a scaled rotation, where we have an additional scaling factor
+
+35
+00:04:03,829 --> 00:04:14,400
+to grow or shrink objects or trajectories in 3D. You can define an affine transform
+
+36
+00:04:14,400 --> 00:04:21,000
+to stretch an object. You can define projective transformations
+
+37
+00:04:21,000 --> 00:04:27,819
+and homographies that are even more general. But for the moment, and mostly for this course we need euclidian
+
+38
+00:04:27,819 --> 00:04:37,620
+transformations to move around the robot in 3D and to compute motions between poses.
+
+39
+00:04:37,620 --> 00:04:44,120
+So now let's look a little bit more at 3D euclidian transformations. Obviously the translation
+
+40
+00:04:44,120 --> 00:04:48,470
+which is a 3 dimensional vector has 3 degrees of freedom because we can move around the
+
+41
+00:04:48,470 --> 00:04:55,840
+object or the quadrotor along all 3 axes. And similarly also the rotation has a 3 degrees
+
+42
+00:04:55,840 --> 00:05:02,520
+of freedom because we can turn the quadrotor around all 3 principle axes.
+
+43
+00:05:02,520 --> 00:05:07,419
+Now if you look closer at this rotation matrix then you see that it actually consists of
+
+44
+00:05:07,419 --> 00:05:18,800
+9 elements because it's a 3 by 3 orthogonal matrix. And this group is also called a special
+
+45
+00:05:18,800 --> 00:05:28,360
+orientation group SO(3) because it preserves scale and the angles.
+
+46
+00:05:28,360 --> 00:05:33,800
+And to read such a rotation matrix you can look at the column vectors and then these
+
+47
+00:05:33,800 --> 00:05:40,680
+vectors correspond to the coordinate axes after the transformation.
+
+48
+00:05:40,680 --> 00:05:46,080
+So what do we now typically need to do with this rotation matrices? Or what are the operations
+
+49
+00:05:46,080 --> 00:05:49,539
+that we frequently have to apply? But of course one thing, and we have seen
+
+50
+00:05:49,539 --> 00:05:55,000
+that already before, we need to invert them and need to be able to concatenate them. For
+
+51
+00:05:55,000 --> 00:06:02,200
+example, to integrate the odometry from sensors and of course we need to the inverse.
+
+52
+00:06:02,200 --> 00:06:11,430
+Sometimes we need to estimate a rotation matrix because we want to find out how the robot moved between
+
+53
+00:06:11,430 --> 00:06:18,270
+two time steps. And now the question is, how easy are these operations on matrices? So
+
+54
+00:06:18,270 --> 00:06:25,600
+is a rotation matrix actually the right representation to solve these tasks?
+
+55
+00:06:25,600 --> 00:06:33,300
+And obviously 3D rotation matrices can very easily concatenated, just by multiplying them.
+
+56
+00:06:33,300 --> 00:06:37,219
+And they can also be very easily be inverted.
+
+57
+00:06:37,219 --> 00:06:42,909
+So those of you who have listened carefully will remember that the rotation matrix or
+
+58
+00:06:42,909 --> 00:06:50,000
+an orthogonal matrix can be inverted just by taking the transpose of the matrix. And
+
+59
+00:06:50,000 --> 00:06:55,169
+that's of course a super-fast operation.
+
+60
+00:06:55,169 --> 00:06:58,990
+The disadvantage is, and that's especially a disadvantage if you need to find the rotation
+
+61
+00:06:58,990 --> 00:07:04,659
+between two points in space, is that it's completely over-parameterized.
+
+62
+00:07:04,659 --> 00:07:11,210
+You have 9 coefficients instead of only the 3 real degrees of freedom.
+
+63
+00:07:11,210 --> 00:07:17,050
+So if you use that in an optimization task then you will have to make sure that the nine
+
+64
+00:07:17,050 --> 00:07:21,990
+parameters your are estimating actually form a valid rotation matrix and that's actually
+
+65
+00:07:21,990 --> 00:07:25,219
+not very trivial.
+
+66
+00:07:25,219 --> 00:07:30,620
+So the question is: aren't there any other representations that are minimal or close
+
+67
+00:07:30,620 --> 00:07:38,700
+to minimal and that help us during this optimization problems?
+
+68
+00:07:38,700 --> 00:07:45,069
+One very common form and probably also the best known form of such a representation are
+
+69
+00:07:45,069 --> 00:07:46,150
+the euler angles.
+
+70
+00:07:46,150 --> 00:07:56,240
+The euler angles are just a product of 3 consecutive rotations
+
+71
+00:07:56,240 --> 00:08:04,199
+around a predefined order of axes. For example, it would first rotate around the x axis, then
+
+72
+00:08:04,199 --> 00:08:07,599
+around the y axis, and then rotate around the z axis.
+
+73
+00:08:07,599 --> 00:08:10,340
+Especially in aerial navigation the so called
+
+74
+00:08:10,340 --> 00:08:13,729
+roll-pitch-yaw convention is very common.
+
+75
+00:08:13,729 --> 00:08:20,900
+And this means that you specify first the roll angle along the main axis of the quadrotor
+
+76
+00:08:20,900 --> 00:08:32,510
+or the plane. Then the pitch angle, which specifies the rotation around the wings of the robot (plane).
+
+77
+00:08:32,510 --> 00:08:42,000
+And then the yaw angle, which describes the heading of the quadrotor or the plane.
+
+78
+00:08:42,000 --> 00:08:51,500
+Then you typically want to convert from euler angles to rotation matrices and vice versa.
+
+79
+00:08:51,500 --> 00:08:56,070
+And you can do that as follows: so you can specify
+
+80
+00:08:56,070 --> 00:09:05,070
+the euler angles as 3 values, the roll, pitch and yaw angle. Then we use that to compute
+
+81
+00:09:05,070 --> 00:09:09,230
+3 individual rotation matrices. A rotation around the z axis, a rotation around the y
+
+82
+00:09:09,230 --> 00:09:14,630
+axis, and a rotation around the x axis, and then you concatenate all 3 of them.
+
+83
+00:09:14,630 --> 00:09:21,240
+So every individual rotation matrix is very simple, because it's just a sine and cosine
+
+84
+00:09:21,240 --> 00:09:26,459
+to describe the rotation around a certain axes. But if you multiply all of them together
+
+85
+00:09:26,459 --> 00:09:32,930
+then you get a very ugly expression as shown her at the bottom.
+
+86
+00:09:32,930 --> 00:09:40,160
+And then again, if you want go back from a rotation matrix to roll-pitch-yaw angles, then you
+
+87
+00:09:40,160 --> 00:09:45,760
+could use these formulas. There are other formulas as well that bring you there. Because
+
+88
+00:09:45,760 --> 00:09:57,870
+it's over parameterized it's hard to find the best way in the presents of noise for doing that.
+
+89
+00:09:57,870 --> 00:10:02,600
+So the advantage of euler angles clearly is that it's a minimal representation. You only
+
+90
+00:10:02,600 --> 00:10:08,740
+have 3 parameters and they have a very easy representation, especially when your angles
+
+91
+00:10:08,740 --> 00:10:15,050
+are close to 0, because then you can just imagine in your head how the plane would be rotated
+
+92
+00:10:15,050 --> 00:10:24,070
+or how far it is away from the resting position. The disadvantage is that there are many different
+
+93
+00:10:24,070 --> 00:10:29,240
+euler representations and there is typically confusion when somebody sends you euler angles,
+
+94
+00:10:29,240 --> 00:10:34,540
+because you never know whether they use the XYZ convention or is the other way around
+
+95
+00:10:34,540 --> 00:10:36,449
+ZYX and so on.
+
+96
+00:10:36,449 --> 00:10:43,600
+So I think there are 24 different ways of interpreting euler angles and that makes it
+
+97
+00:10:43,600 --> 00:10:47,060
+sometimes hard to communicate with them in the right way.
+
+98
+00:10:47,060 --> 00:10:51,050
+The other problem is that it's really difficult to concatenate them because you have always
+
+99
+00:10:51,050 --> 00:10:56,740
+to convert them to a rotation matrix and then do the concatenation there and then extract
+
+100
+00:10:56,740 --> 00:11:00,220
+again the resulting euler angles.
+
+101
+00:11:00,220 --> 00:11:06,300
+And the last problem, and that's actually in terms of optimization the hardest one that
+
+102
+00:11:06,300 --> 00:11:13,500
+euler angles have singularities: they can get locked in a so called gimbal lock problem,
+
+103
+00:11:13,500 --> 00:11:19,910
+as illustrated here. It can happen in the euler angles that two
+
+104
+00:11:19,910 --> 00:11:26,850
+axes are being aligned and in this situation you losing 1 degree of freedom.
+
+105
+00:11:26,850 --> 00:11:34,060
+For example, these 3 rings here, so each of these rings now describes one rotation
+
+106
+00:11:34,060 --> 00:11:43,400
+accordingly to the roll-pitch-yaw formulation. But it can happen that all of these axes then
+
+107
+00:11:43,400 --> 00:11:50,500
+align, and then we have all of this three disks lying in one plane. And then in this plane
+
+108
+00:11:50,500 --> 00:11:58,900
+you can't rotate anymore around the central axis, the yaw angle.
+
+109
+00:11:58,900 --> 00:12:06,500
+This can be very bad and can't be solved with euler angles.
+
+110
+00:12:06,500 --> 00:12:12,069
+An alternative representation and also quite intuitive one is the so called axis/angle
+
+111
+00:12:12,069 --> 00:12:19,600
+representation. There the idea is that you describe a rotation by a rotation axis. A
+
+112
+00:12:19,600 --> 00:12:25,880
+normal direction vector in 3D and a rotation angle Theta that says by how far you rotate
+
+113
+00:12:25,880 --> 00:12:28,170
+around this axis.
+
+114
+00:12:28,170 --> 00:12:33,850
+This representation than has 4 degrees of freedom because you need 3 degrees of freedom
+
+115
+00:12:33,850 --> 00:12:41,399
+to specify this direction and a fourth parameter to specify the rotation angle.
+
+116
+00:12:41,399 --> 00:12:50,589
+You can combine both of that together by saying that the length of you axis directly encodes
+
+117
+00:12:50,589 --> 00:13:02,630
+the rotation angle. So a rotation of 0 would just be the 0-vector. A rotation of 180 degrees
+
+118
+00:13:02,630 --> 00:13:13,000
+would mean that your rotation vector has a length of Pi.
+
+119
+00:13:13,000 --> 00:13:17,759
+This representation, where you have just 3 parameters, is also called the angular velocity
+
+120
+00:13:17,759 --> 00:13:25,810
+representation or a so called twist. This is again a minimal representation, but
+
+121
+00:13:25,810 --> 00:13:32,600
+it is not unique similarly to the euler angles. I guess you can imagine why this is the case.
+
+122
+00:13:32,600 --> 00:13:40,949
+So every 2 Pi you repeat the same rotation, because if you rotate more than 360 degrees
+
+123
+00:13:40,949 --> 00:13:47,639
+then you are again at the same spot.
+
+124
+00:13:47,639 --> 00:13:56,400
+There are again formulas to convert from axis angle to rotation matrices and back.
+
+125
+00:13:56,400 --> 00:14:03,500
+From axis/angle to rotation matrices the conversion formula is called the Rodriguez formula, as
+
+126
+00:14:03,500 --> 00:14:09,579
+given here. The inverse is also given here.
+
+127
+00:14:09,579 --> 00:14:15,360
+For more information there is lots of more things to be said here, but to keep it simple,
+
+128
+00:14:15,360 --> 00:14:19,589
+and because we don't really need it in the rest of the course I would like to refer you
+
+129
+00:14:19,589 --> 00:14:28,529
+to the book of Ma and colleagues and in particular to chapter 2. If you google for this then
+
+130
+00:14:28,529 --> 00:14:32,800
+you can find an online copy.
+
+131
+00:14:32,800 --> 00:14:39,100
+So as I said the axis/angle representation is also called twist coordinates. The advantages
+
+132
+00:14:39,100 --> 00:14:45,639
+are: it's a minimal representation, and a second advantage is that the derivations are
+
+133
+00:14:45,639 --> 00:14:49,759
+really simple of that. So especially for optimization problems that
+
+134
+00:14:49,759 --> 00:14:54,870
+we will see later the axis/angle representation is really beneficial.
+
+135
+00:14:54,870 --> 00:15:00,000
+The disadvantage again, similar to euler angles again is that it's difficult to concatenate them.
+
+136
+00:15:00,000 --> 00:15:05,900
+You always need to go to a rotation matrix, and then multiply them there and convert
+
+137
+00:15:05,900 --> 00:15:10,470
+them back to axis/angle. And the conversion is also fairly slow because
+
+138
+00:15:10,470 --> 00:15:19,790
+you need to compute sine and cosine, which can be at least on some processors costly operations.
+
+139
+00:15:19,790 --> 00:15:24,589
+So a last representations for 3D rotations is so called quaternions.
+
+140
+00:15:24,589 --> 00:15:33,649
+A quaternion is a 4 dimensional vector representing a rotation. It can be split into a real and
+
+141
+00:15:33,649 --> 00:15:40,569
+a vector part. The real part is just a number and the vector part is a 3 dimensional vector then.
+
+142
+00:15:40,569 --> 00:15:45,879
+And you can normalize them such that the length
+
+143
+00:15:45,879 --> 00:15:51,149
+of the quaternion is exactly 1. And in this case you can imagine these unit
+
+144
+00:15:51,149 --> 00:15:59,800
+quaternions to be points on a 4 dimensional sphere of radius 1.
+
+145
+00:15:59,800 --> 00:16:08,000
+And then there is one ambiguity in quaternions: opposite sign quaternions represent the same
+
+146
+00:16:08,000 --> 00:16:11,279
+rotation. So the unit quaternion actually just lives
+
+147
+00:16:11,279 --> 00:16:18,279
+on one half of a sphere, and the other half of the sphere then represents the same rotations.
+
+148
+00:16:18,279 --> 00:16:21,970
+But otherwise quaternions are unique.
+
+149
+00:16:21,970 --> 00:16:27,310
+So the really good news on quaternions is that they are easy to multiply, to concatenate
+
+150
+00:16:27,310 --> 00:16:32,850
+and they can be easily inverted. So they are really efficient and easy to implement. And
+
+151
+00:16:32,850 --> 00:16:41,000
+this is the reason why many quadrotors that need to do these operations onboard actually
+
+152
+00:16:41,000 --> 00:16:47,079
+use the quaternion representation. For example to concatenate two quaternions
+
+153
+00:16:47,079 --> 00:16:51,900
+it's just a small number of multiplications, and subtractions and additions that you need
+
+154
+00:16:51,900 --> 00:16:57,800
+to do. So things that you can do fairly easy on an embedded system. Also to compute the
+
+155
+00:16:57,800 --> 00:17:03,300
+inverse is extremely easy you just flip the sign of either the real or imaginary part.
+
+156
+00:17:03,300 --> 00:17:07,940
+So two more things that you would like to do with quaternions is to rotate a 3D vector
+
+157
+00:17:07,940 --> 00:17:14,550
+using the rotation represented by the quaternion, and this turns out to be just again a multiplication
+
+158
+00:17:14,550 --> 00:17:21,119
+of the quaternion with the vector and the conjugate of the quaternion, which is extremely
+
+159
+00:17:21,119 --> 00:17:28,500
+fast to compute. And if you want to, you can convert of course quaternions to the other
+
+160
+00:17:28,500 --> 00:17:32,600
+types. For example, it's closely related to the axis/angle
+
+161
+00:17:32,600 --> 00:17:37,620
+representation. But of course, you can also transform a quaternion to a rotation matrix and convert
+
+162
+00:17:37,620 --> 00:17:42,750
+the rotation matrix to a quaternion.
+
+163
+00:17:42,750 --> 00:17:50,500
+So to summarize that, there are different representations of 3D rotations.
+
+164
+00:17:50,500 --> 00:17:54,400
+There is not really a single best one it depends on your application.
+
+165
+00:17:54,400 --> 00:18:01,270
+If you jusst need to just concatenate things then rotation matrices and quaternions are very well suited.
+
+166
+00:18:01,270 --> 00:18:05,290
+If you want to optimize a 3D representation,
+
+167
+00:18:05,290 --> 00:18:09,300
+then the axis/angle representation is very well suited.
+
+168
+00:18:09,300 --> 00:18:18,300
+And maybe one thing in general that is good to know, even for experts in 3D orations or
+
+169
+00:18:18,300 --> 00:18:27,180
+3D geometry it's really hard to parse or read a 3D rotation vector, no matter in what representation.
+
+170
+00:18:27,180 --> 00:18:33,490
+So if I see euler angles I typically do not know what rotation they do correspond with,
+
+171
+00:18:33,490 --> 00:18:38,310
+except if it's maybe close to the origin. And the same holds for a rotation matrix,
+
+172
+00:18:38,310 --> 00:18:42,670
+I think there are very few people only who can tell you how an object is oriented if
+
+173
+00:18:42,670 --> 00:18:49,700
+the see the rotation matrix. And it gets even harder for the axis/angle
+
+174
+00:18:49,700 --> 00:18:56,500
+and in particular for the quaternion representation. So if you look at something like this and
+
+175
+00:18:56,500 --> 00:19:01,590
+don't know what rotation it is, be assured this is normal and there is no good way of
+
+176
+00:19:01,590 --> 00:19:06,580
+interpreting it manually. But one thing that can help you here because
+
+177
+00:19:06,580 --> 00:19:15,100
+you need to debug of course your program at some point is to use good 3D visualization tools.
+
+178
+00:19:15,100 --> 00:19:20,330
+For example, under Linux when you use ROS (the Robot Operating System), there is a good
+
+179
+00:19:20,330 --> 00:19:28,500
+tool called Rviz. Under C++ there is the library QGLViewer. And of course for our online exercises
+
+180
+00:19:28,500 --> 00:19:34,310
+we have this WebGL based 3D viewer that will help you to determine whether your orientations
+
+181
+00:19:34,310 --> 00:19:37,920
+and rotations are right.
+
+182
+00:19:37,920 --> 00:19:44,180
+Now the last part in this video is now that we need to be able to do 3D to 2D perspective
+
+183
+00:19:44,180 --> 00:19:55,440
+projections, as they happen in 2D or in cameras. So for example, here we have two objects being
+
+184
+00:19:55,440 --> 00:20:02,170
+located in the real world in 3D. And we have a camera actually observing these objects.
+
+185
+00:20:02,170 --> 00:20:08,630
+And then these objects being projected on the image plane of the camera. So we need
+
+186
+00:20:08,630 --> 00:20:17,300
+to find a way to compute from the 3D points in the world the 2D coordinates on the image
+
+187
+00:20:17,300 --> 00:20:22,780
+plane. And the most used model for cameras that holds
+
+188
+00:20:22,780 --> 00:20:29,570
+for most cameras which have normal lenses is the so called pin-hole camera model, where
+
+189
+00:20:29,570 --> 00:20:39,340
+you just remove essentially the last component of your homogeneous vector to obtain a 2 dimensional
+
+190
+00:20:39,340 --> 00:20:46,500
+homogeneous vector of your point. And then again, x tilde is homogeneous so
+
+191
+00:20:46,500 --> 00:20:56,000
+we need to divide by the last coordinate to obtain the real coordinate on the image plane.
+
+192
+00:20:56,000 --> 00:21:02,690
+One problem of course is so far if we just down project a 3D point in the world to 2D,
+
+193
+00:21:02,690 --> 00:21:08,000
+the 2D point will still be given in the same units as our 3D point.
+
+194
+00:21:08,000 --> 00:21:13,250
+For example, if our 3D points are specified in meters, then also the 2D point will be specified
+
+195
+00:21:13,250 --> 00:21:19,750
+in meters on the image plane, but of course, what we need with digital cameras is the pixel
+
+196
+00:21:19,750 --> 00:21:30,300
+position. So we need to convert this position in meters to a position in pixels. And for
+
+197
+00:21:30,300 --> 00:21:39,130
+that we need to apply some scaling and offset. This matrix that does this scaling and offset
+
+198
+00:21:39,130 --> 00:21:45,270
+is usually called the intrinsic matrix. It is sometimes abbreviated with a K and it consist
+
+199
+00:21:45,270 --> 00:21:55,520
+of 5 parameters. Namely the focal length f_x and f_y that specifies in principle the opening
+
+200
+00:21:55,520 --> 00:22:00,800
+angle of your camera. The larger this focal length is the smaller the opening angle of your
+
+201
+00:22:00,800 --> 00:22:07,680
+camera is and vice versa. A normal camera for example, like a webcam
+
+202
+00:22:07,680 --> 00:22:18,630
+with say 60 degrees of opening angle has a focal length of around 500 to 1000.
+
+203
+00:22:18,630 --> 00:22:24,210
+Then we also need to specify where the camera center is. This is typically in the middle
+
+204
+00:22:24,210 --> 00:22:29,180
+of the image, but it doesn't necessarily have to be there. It depends on how exactly where
+
+205
+00:22:29,180 --> 00:22:34,970
+the lens is mounted and where exactly the sensor is mounted. So during calibration it makes often
+
+206
+00:22:34,970 --> 00:22:42,470
+sense to calculate these values. And then there can be a skew factor that determines
+
+207
+00:22:42,470 --> 00:22:49,400
+whether or not the pixels on the image array are actually orthogonal or not.
+
+208
+00:22:49,400 --> 00:22:55,880
+But actually on all modern cameras there is no skew, so this s can be assumed to be 0.
+
+209
+00:22:55,880 --> 00:23:00,900
+And then one last thing, of course the 3D point coordinates that we've been looking
+
+210
+00:23:00,900 --> 00:23:06,870
+at previously are typically given in world coordinates.
+
+211
+00:23:06,870 --> 00:23:11,850
+So before we can project them onto the image plane we need to transform them from world
+
+212
+00:23:11,850 --> 00:23:18,760
+coordinates to the local camera system. This transformations is also called the camera
+
+213
+00:23:18,760 --> 00:23:26,100
+extrinsic parameters. In these parameters is described where the camera is located in
+
+214
+00:23:26,100 --> 00:23:30,770
+3D space. And this is similar as we have seen before,
+
+215
+00:23:30,770 --> 00:23:38,240
+the conversion from a global coordinate system to the local coordinate system of the camera.
+
+216
+00:23:38,240 --> 00:23:48,520
+And now we can concatenate all these transformations so we have a 3D world p_w being transformed
+
+217
+00:23:48,520 --> 00:23:54,880
+into the local coordinate frame of the camera. And then being projected to 2D, and
+
+218
+00:23:54,880 --> 00:23:58,110
+scaled and offsetted according to the camera intrinsic.
+
+219
+00:23:58,110 --> 00:24:05,800
+And then, these homogeneous vector x here gives us the coordinates on the screen or on the
+
+220
+00:24:05,800 --> 00:24:09,000
+image plane.
+
+221
+00:24:09,000 --> 00:24:13,210
+So to summarize the video of today:
+
+222
+00:24:13,210 --> 00:24:18,500
+we have looked at 3D points, lines and planes, we have also introduced 3D transformations,
+
+223
+00:24:18,500 --> 00:24:23,920
+in particular the euclidian transformation that we will be using a lot in this course.
+
+224
+00:24:23,920 --> 00:24:31,820
+And then, we have look at different representations for 3D orientations. And as we have summarized
+
+225
+00:24:31,820 --> 00:24:37,300
+earlier, the choice greatly depends on the application you're looking at and in the next
+
+226
+00:24:37,300 --> 00:24:44,700
+quiz we will ask you again to summarize which of these representations you still remember
+
+227
+00:24:44,700 --> 00:24:47,510
+and what the advantages and disadvantages are.
+
+228
+00:24:47,510 --> 00:24:55,300
+And we looked at 3D to 2D perspective projections as it happens in a normal camera.
+
+229
+00:24:55,300 --> 00:25:01,630
+So these things here that we have looked at today are really important and you really
+
+230
+00:25:01,630 --> 00:25:04,610
+have to know them by heart.
+
+231
+00:25:04,610 --> 00:25:09,230
+If you had the feeling by watching this video that you didn't fully understand it, then
+
+232
+00:25:09,230 --> 00:25:16,200
+my advice would be to look at the computer vision book of Richard Szeliski, in particular
+
+233
+00:25:16,200 --> 00:25:19,510
+chapter 2. It's fully available online (http://szeliski.org/Book/)
+
+234
+00:25:19,510 --> 23:59:59,999
+with lots of material. Please have a look at that.
+

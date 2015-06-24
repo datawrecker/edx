@@ -1,0 +1,328 @@
+1
+00:00:01,500 --> 00:00:05,750
+Hello this is video 4.3 on kinematics and dynamics.
+
+2
+00:00:05,750 --> 00:00:10,960
+In this video we will look at how rigid bodies behave under the influence of forces and torques
+
+3
+00:00:10,960 --> 00:00:15,089
+that are being applied to them. And then we will see how we can use that to
+
+4
+00:00:15,089 --> 00:00:21,600
+model the motion of a quadrotor depending on the thrust of its motors.
+
+5
+00:00:21,600 --> 00:00:29,240
+So kinematics in general describes the motion of rigid bodies. Typically you can describe
+
+6
+00:00:29,240 --> 00:00:37,080
+the state of rigid body then in classical mechanics by its position in space, by its current velocity,
+
+7
+00:00:37,080 --> 00:00:43,100
+and by its acceleration. And then you can find very simple rules. You know
+
+8
+00:00:43,100 --> 00:00:47,100
+that if you integrate up acceleration you get the velocity.
+
+9
+00:00:47,100 --> 00:00:51,049
+If you integrate velocity you get position.
+
+10
+00:00:51,049 --> 00:00:55,780
+And just to immediately give you an example how this might look like: imagine that we
+
+11
+00:00:55,780 --> 00:01:02,600
+are looking at a rigid body that is living in a 1 dimensional world. So we can describe
+
+12
+00:01:02,600 --> 00:01:10,100
+its position just by using a scalar x, describing its position in space.
+
+13
+00:01:10,100 --> 00:01:15,490
+We can describe its speed also by a single scalar x dot,
+
+14
+00:01:15,490 --> 00:01:20,010
+and then, its current acceleration by x double dot.
+
+15
+00:01:20,010 --> 00:01:29,400
+And then, we can apply an action. To add that in our example, now just changes are being added to the acceleration
+
+16
+00:01:29,400 --> 00:01:35,920
+of this object. And we need a time constant delta t that tells us how much time passes
+
+17
+00:01:35,920 --> 00:01:39,490
+by form one moment to the next.
+
+18
+00:01:39,490 --> 00:01:47,890
+And given that we can specify a linear process model that tells us how we can evolve our
+
+19
+00:01:47,890 --> 00:01:56,200
+state from time step t-1 to time step t. And you have probably seen that before you can
+
+20
+00:01:56,200 --> 00:02:05,250
+say that the current position equals the previous position plus delta t times our current speed.
+
+21
+00:02:05,250 --> 00:02:12,860
+This is the first row of this system matrix, in the second row we have the relationship
+
+22
+00:02:12,860 --> 00:02:21,000
+that the current speed depends on the previous speed plus delta t times our current acceleration.
+
+23
+00:02:21,000 --> 00:02:29,400
+And we just keep the acceleration the same as long as nothing else happens. And then,
+
+24
+00:02:29,400 --> 00:02:38,370
+to this state we add our control input u. Just by this simple vector 0,0,1, which just means
+
+25
+00:02:38,370 --> 00:02:48,410
+that we add the action to our acceleration. And using that you can already get a simple dynamical
+
+26
+00:02:48,410 --> 00:02:54,209
+system of an object that floats in 1 dimensional space.
+
+27
+00:02:54,209 --> 00:03:06,230
+Now dynamics is the theory that relates forces and torques to such accelerations, as you
+
+28
+00:03:06,230 --> 00:03:12,230
+might know from school: forces induce a linear acceleration on the body, while torques induce
+
+29
+00:03:12,230 --> 00:03:18,300
+an angular acceleration. You can say that a torque is the turning-force that makes something turn.
+
+30
+00:03:18,300 --> 00:03:28,510
+Let's start with forces first, a force can be represented by a vector and they can be
+
+31
+00:03:28,510 --> 00:03:35,020
+summed up. So if you for example apply two forces to
+
+32
+00:03:35,020 --> 00:03:40,400
+this soccer ball here in x and y direction, then this corresponds exactly to the force as if you
+
+33
+00:03:40,400 --> 00:03:47,319
+would have applied a force along this diagonal line F_x + F_y.
+
+34
+00:03:47,319 --> 00:03:52,620
+And the force that you apply to an object directly relates to the acceleration that
+
+35
+00:03:52,620 --> 00:04:00,519
+this object perceives. And this acceleration then also depends on
+
+36
+00:04:00,519 --> 00:04:06,959
+the mass of the object, so a heavier object is more difficult of course to be accelerated
+
+37
+00:04:06,959 --> 00:04:09,550
+or to be moved.
+
+38
+00:04:09,550 --> 00:04:16,700
+A torque you can say, loosely speaking, is the turning-force.
+
+39
+00:04:16,700 --> 00:04:21,789
+So if you have a lever arm that you try to move you can apply a force on one side
+
+40
+00:04:21,789 --> 00:04:27,199
+and that will induce then a torque on the rotation axis.
+
+41
+00:04:27,199 --> 00:04:32,759
+And this torque that is generated depends on two things: it depends on the force of
+
+42
+00:04:32,759 --> 00:04:38,500
+course, the more force you apply to a lever arm the more torque you get. And then again,
+
+43
+00:04:38,500 --> 00:04:46,039
+it depends on the distance of the place where you apply the force and the rotation center
+
+44
+00:04:46,039 --> 00:04:48,990
+which is denoted here in this graphics by r.
+
+45
+00:04:48,990 --> 00:04:54,699
+And as before, it also depends on the mass or the mass distribution on the object, which
+
+46
+00:04:54,699 --> 00:05:04,449
+is typically captured by this inertial matrix J here that then relates the torque to the
+
+47
+00:05:04,449 --> 00:05:10,889
+angular acceleration, here denoted by bold alpha.
+
+48
+00:05:10,889 --> 00:05:18,979
+And now let's see how this translate to quadrotors. As you have seen before, the quadrotor consists
+
+49
+00:05:18,979 --> 00:05:25,710
+of 4 propellers, and every propeller generates some thrust. And this induces a certain force,
+
+50
+00:05:25,710 --> 00:05:32,629
+so we have now 4 sources of force that push the quadrotor up.
+
+51
+00:05:32,629 --> 00:05:38,319
+And we have the gravitational force that pulls the quadrotor down at the same time.
+
+52
+00:05:38,319 --> 00:05:46,700
+And if we count all of this forces together in the vertical case then the quadrotor hovers
+
+53
+00:05:46,700 --> 00:05:53,330
+exactly in place, if the thrust forces of all for rotors exactly match the gravitational
+
+54
+00:05:53,330 --> 00:05:55,800
+force that pulls it down again.
+
+55
+00:05:55,800 --> 00:06:01,800
+And at the same time, every propeller also induces the torque, which is the counter torque
+
+56
+00:06:01,800 --> 00:06:08,389
+that's generated by the propellers moving the air.
+
+57
+00:06:08,389 --> 00:06:15,089
+And we have to make sure that all of this torques actually sum to 0, in order not to get any motion.
+
+58
+00:06:15,089 --> 00:06:21,419
+So this graphics shows again, now if we want to hover in place all of the 4 forces have
+
+59
+00:06:21,419 --> 00:06:28,319
+to equal the gravitational force, if it's larger, then we actually accelerate to the
+
+60
+00:06:28,319 --> 00:06:28,559
+top.
+
+61
+00:06:28,559 --> 00:06:35,869
+So the resulting force is the force that is being applied to the body of the quadrotor.
+
+62
+00:06:35,869 --> 00:06:42,869
+Now if we turn the quadrotor slightly, then this thrust force is not in a line any more
+
+63
+00:06:42,869 --> 00:06:55,800
+with the gravitation. And this means that we can separate this resulting force from the motor thrust
+
+64
+00:06:55,800 --> 00:07:01,139
+into a vertical component F_z that compensates then for the gravity or that has to compensate
+
+65
+00:07:01,139 --> 00:07:06,500
+for the gravity if you want to keep the same position. And an x and y component that actually
+
+66
+00:07:06,500 --> 00:07:11,289
+makes the quadrotor go forward or sideways.
+
+67
+00:07:11,289 --> 00:07:23,309
+And because all of these forces are actually vectors, we have to transform the thrust vector
+
+68
+00:07:23,309 --> 00:07:31,610
+into the global coordinate system by using for example a rotation matrix to be able to
+
+69
+00:07:31,610 --> 00:07:37,529
+compute the acceleration in global coordinates.
+
+70
+00:07:37,529 --> 00:07:46,889
+Then if we want to change the attitude of our quadrotor, we can bring the motors into
+
+71
+00:07:46,889 --> 00:07:53,700
+a mode where the two opposite motors produce  a unequal thrust, and this then induces a
+
+72
+00:07:53,700 --> 00:07:59,429
+certain torque around the rotation axis or the center of the mass of the quadrotor.
+
+73
+00:07:59,429 --> 00:08:07,000
+And again, by the formula from a few slides before we can then compute the resulting torque and that leads giving
+
+74
+00:08:07,000 --> 00:08:13,369
+that inertial matrix J to a certain induced angular acceleration alpha.
+
+75
+00:08:13,369 --> 00:08:24,199
+And then for rotating around the vertical axis we can also modulate the speeds of the
+
+76
+00:08:24,199 --> 00:08:32,370
+rotors in such a way that the sum of the torques does not equals 0 any more, but the left
+
+77
+00:08:32,370 --> 00:08:35,809
+turning motors are turning faster than the right turning ones for example. And that
+
+78
+00:08:35,809 --> 00:08:40,380
+induces the torque on the overall system.
+
+79
+00:08:40,380 --> 00:08:46,530
+So this already summarizes this video, we have looked at rigid body kinematics. Just
+
+80
+00:08:46,530 --> 00:08:53,080
+remember that every rigid body can be described using its position, velocity, and acceleration.
+
+81
+00:08:53,080 --> 00:09:02,600
+And then we looked at what accelerations forces and torques actually produce.
+
+82
+00:09:02,600 --> 23:59:59,999
+And then, we just applied that to quadrotors because this is what we need.
+

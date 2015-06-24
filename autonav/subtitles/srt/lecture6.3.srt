@@ -1,0 +1,708 @@
+1
+00:00:00,930 --> 00:00:05,600
+Hello and welcome to video 6.3. In the previous video we've introduced the
+
+2
+00:00:05,600 --> 00:00:09,190
+Kalman Filter (KF) and the Extended Kalman Filter (EKF). And I know that things have
+
+3
+00:00:09,190 --> 00:00:14,760
+been pretty theoretical there and this is why we have now in this video a whole bunch
+
+4
+00:00:14,760 --> 00:00:23,750
+of nice visualization and a pretty nice example on how EKF looks like in practice.
+
+5
+00:00:23,750 --> 00:00:30,250
+So imagine that we have a robot that is moving in 2D, and then, as you know we can describe
+
+6
+00:00:30,250 --> 00:00:37,280
+its state with 3 parameters because it has x position, y position and an orientation
+
+7
+00:00:37,280 --> 00:00:43,970
+or heading psi. And this robot can move around, we assume
+
+8
+00:00:43,970 --> 00:00:55,940
+it's a quadrotor so it can move in all directions arbitrarily so it can move forward with a
+
+9
+00:00:55,940 --> 00:01:03,460
+speed of x dot, move sideward using a speed of y dot, and it can rotate around its axis
+
+10
+00:01:03,460 --> 00:01:07,040
+using a speed of psi dot.
+
+11
+00:01:07,040 --> 00:01:16,200
+And furthermore, we assume that the robot makes occasionally observations. And again
+
+12
+00:01:16,200 --> 00:01:22,150
+it sees a visual marker with its camera and it can determine its pose relative to the
+
+13
+00:01:22,150 --> 00:01:29,170
+robot. So it sees a marker at a particular position
+
+14
+00:01:29,170 --> 00:01:31,960
+x and y in a particular orientation psi.
+
+15
+00:01:31,960 --> 00:01:39,040
+And now it is important to note that we represent the state in global coordinates, so this x
+
+16
+00:01:39,040 --> 00:01:44,040
+and y and psi are with respect to a global coordinate frame that is located somewhere
+
+17
+00:01:44,040 --> 00:01:50,759
+in the world. But our odometry and the visual observation of the marker are given in the
+
+18
+00:01:50,759 --> 00:01:57,259
+local frame of the robot, which is typically the case with a robot, depends on your sensors,
+
+19
+00:01:57,259 --> 00:02:02,000
+but typically all sensor measurements are made in the intrinsic frame of the robot.
+
+20
+00:02:02,000 --> 00:02:07,280
+When the robot goes forward it doesn't care about where the origin of the world is. It
+
+21
+00:02:07,280 --> 00:02:15,799
+just goes forward within its own coordinate frame. And the same applies typically to observations
+
+22
+00:02:15,799 --> 00:02:23,290
+of its sensors because it has a camera and in its camera image it sees somewhere the marker, so
+
+23
+00:02:23,290 --> 00:02:28,340
+it's relative to its camera. This is not always the case I should say for
+
+24
+00:02:28,340 --> 00:02:36,199
+example, if we look at GPS then you always get global coordinates but for most sensors
+
+25
+00:02:36,199 --> 00:02:43,629
+like for ultrasound and cameras actually you make local observations.
+
+26
+00:02:43,629 --> 00:02:49,709
+And we've discussed this in depth already in week two, so if you feel confused in this
+
+27
+00:02:49,709 --> 00:02:54,540
+example by the coordinate transforms and the representations, then please go back to this
+
+28
+00:02:54,540 --> 00:03:01,980
+video to get more details, and there are also some very nice exercises that you can do to
+
+29
+00:03:01,980 --> 00:03:07,449
+refresh your knowledge of coordinate transforms.
+
+30
+00:03:07,449 --> 00:03:12,099
+So in any case, this is our representation of the state and now the next question is,
+
+31
+00:03:12,099 --> 00:03:18,629
+We need to specify two things, namely
+
+32
+00:03:18,629 --> 00:03:29,409
+our motion function and our sensor function. And you have seen that before, the motion
+
+33
+00:03:29,409 --> 00:03:37,040
+function depends on our previous state and our current control that we give.
+
+34
+00:03:37,040 --> 00:03:46,409
+And now we need to transform the speeds in the global frame. So we can say that our new
+
+35
+00:03:46,409 --> 00:03:57,180
+x position depends on the previous x position times this odometry speed rotated by our current
+
+36
+00:03:57,180 --> 00:04:06,119
+heading angle times the time interval between which we get these odometry updates.
+
+37
+00:04:06,119 --> 00:04:13,540
+The same holds of course for the y axis and for our heading we have a much simpler expression,
+
+38
+00:04:13,540 --> 00:04:22,360
+because we can just add up our previous heading plus the rotation speed times our time interval.
+
+39
+00:04:22,360 --> 00:04:26,949
+So this is clearly nonlinear because we have
+
+40
+00:04:26,949 --> 00:04:34,530
+sine and cosine in the formula in our motion function. And to be able to run the EKF we
+
+41
+00:04:34,530 --> 00:04:40,419
+need now to linearize this motion function and as we have seen in the previous video
+
+42
+00:04:40,419 --> 00:04:46,599
+for that we need to compute the derivative motion function, which means that we derive
+
+43
+00:04:46,599 --> 00:04:50,150
+this function with respect to our current state.
+
+44
+00:04:50,150 --> 00:04:58,009
+Which gives us then a matrix and this means that we end up with a 3 by 3 matrix in this
+
+45
+00:04:58,009 --> 00:05:07,680
+case where the columns correspond to the derivatives with respect to x, y, and psi.
+
+46
+00:05:07,680 --> 00:05:18,789
+And the rows correspond to the rows that we had before giving our successor state in x,
+
+47
+00:05:18,789 --> 00:05:21,240
+y, and psi again.
+
+48
+00:05:21,240 --> 00:05:29,789
+So I think we also have such an exercise prepared for you where you have to specify the motion
+
+49
+00:05:29,789 --> 00:05:35,909
+function and derive something like this on yourself.
+
+50
+00:05:35,909 --> 00:05:45,629
+For the sensor model we also need to construct this sensor function or observation function.
+
+51
+00:05:45,629 --> 00:05:49,819
+But his is a bit more complicated because we have to convert between this divergent
+
+52
+00:05:49,819 --> 00:05:51,240
+coordinate systems.
+
+53
+00:05:51,240 --> 00:05:57,389
+And this is as follows: imagine that we now where the marker is located in global coordinates.
+
+54
+00:05:57,389 --> 00:06:04,069
+And now we know that somebody has attached a marker at 2 meters distance from the origin
+
+55
+00:06:04,069 --> 00:06:11,740
+and this marker is oriented into a certain direction. You need to know that to be able
+
+56
+00:06:11,740 --> 00:06:16,430
+to compute the position of the robot if it sees this marker somewhere.
+
+57
+00:06:16,430 --> 00:06:21,030
+So this is given a priori the marker location and global world coordinates is given a priori.
+
+58
+00:06:21,030 --> 00:06:26,370
+And then, the robot makes local observations of this marker and uses this knowledge of
+
+59
+00:06:26,370 --> 00:06:33,240
+where the marker is in the global coordinate frame to update its position estimates.
+
+60
+00:06:33,240 --> 00:06:38,310
+And now, for being able to use this and the Kalman Filter we need to define this observation
+
+61
+00:06:38,310 --> 00:06:45,870
+function, which given the state of our robot x determines the sensor observation z.
+
+62
+00:06:45,870 --> 00:06:51,069
+And because our sensor makes observations in its local frame we need to compute the
+
+63
+00:06:51,069 --> 00:06:57,639
+pose of the marker relative to the robot. And this can be done as follows, I mean there
+
+64
+00:06:57,639 --> 00:07:01,169
+are different ways of computing this, but this is I thought maybe the most intuitive
+
+65
+00:07:01,169 --> 00:07:05,810
+one. So first we can construct the transformation
+
+66
+00:07:05,810 --> 00:07:11,419
+matrix that corresponds to our global robot pose. You have seen that before in week two.
+
+67
+00:07:11,419 --> 00:07:17,979
+Given our x, y, and psi of the current state we can construct this 3 by 3 transformation
+
+68
+00:07:17,979 --> 00:07:24,279
+matrix, remember the upper left part is the rotation matrix, 2 by 2 in this case, and
+
+69
+00:07:24,279 --> 00:07:31,600
+the upper right vector, x and y is our translation vector.
+
+70
+00:07:31,600 --> 00:07:38,599
+And now we can use that to transform coordinates from the local system to global system. So
+
+71
+00:07:38,599 --> 00:07:44,379
+in our case we are actually giving global coordinates from which we need to infer the
+
+72
+00:07:44,379 --> 00:07:49,870
+local coordinates. And this can be done by inverting x. But as you remember from week
+
+73
+00:07:49,870 --> 00:07:54,909
+tow, there is a very efficient way we can transpose the rotation matrix and replace
+
+74
+00:07:54,909 --> 00:08:00,159
+the translation part with minus rotation matrix transposed times t.
+
+75
+00:08:00,159 --> 00:08:06,849
+And if we fill in the values or if we fill in the formulas then we and up now with the
+
+76
+00:08:06,849 --> 00:08:14,939
+following observation function. So the first two components are just the local
+
+77
+00:08:14,939 --> 00:08:23,259
+translation vector of where we expect the marker to be seen by the robot given its global
+
+78
+00:08:23,259 --> 00:08:27,879
+coordinates. And for the orientation we can just compute the difference between the global
+
+79
+00:08:27,879 --> 00:08:33,779
+marker orientations minus our current heading of the robot. And this gives us then the local
+
+80
+00:08:33,779 --> 00:08:37,399
+heading of the marker.
+
+81
+00:08:37,399 --> 00:08:42,479
+And now, again for the Extended Kalman Filter we need to derive this observation function
+
+82
+00:08:42,479 --> 00:08:50,660
+because it's again nonlinear, similar to the motion model. So we need to derive this with
+
+83
+00:08:50,660 --> 00:09:00,620
+respect to all components of our state. So we derive x with respect to x, y, and psi.
+
+84
+00:09:00,620 --> 00:09:10,190
+And then again, we obtain such a 3 by 3 matrix which is called the Jacobian. And this is
+
+85
+00:09:10,190 --> 00:09:13,810
+what you then plug into our EKF.
+
+86
+00:09:13,810 --> 00:09:20,870
+So just to pinpoint again the interesting parts. We have constructed the motion model
+
+87
+00:09:20,870 --> 00:09:26,440
+g which we can directly fill in here. We have derived g with respect to the state which
+
+88
+00:09:26,440 --> 00:09:31,820
+gave us this matrix capital G that we plugin here.
+
+89
+00:09:31,820 --> 00:09:41,660
+We have derived our sensor model, which we plugin then in this equation and we have derived
+
+90
+00:09:41,660 --> 00:09:47,139
+the sensor model which gives us capital H that we need to compute the Kalman Gain.
+
+91
+00:09:47,139 --> 00:09:51,820
+So now we come finally to a few demo runs of our extended Kalman Filter that we have
+
+92
+00:09:51,820 --> 00:09:58,740
+constructed on the previous slides using the sensor model and the motion model as explained.
+
+93
+00:09:58,740 --> 00:10:06,209
+We visualize now the state of the robot using this black circle with the black line. This
+
+94
+00:10:06,209 --> 00:10:11,959
+visualization shows our mean estimate of the pose of the robot.
+
+95
+00:10:11,959 --> 00:10:17,540
+So it shows the position in x and y, and it shows our mean estimate of its orientation.
+
+96
+00:10:17,540 --> 00:10:26,310
+And this robot now goes around given a sequence of commands. We assume at the moment that
+
+97
+00:10:26,310 --> 00:10:32,910
+we don't have any observations. So we just run the prediction step or the motion update
+
+98
+00:10:32,910 --> 00:10:39,370
+of the Kalman Filter until the end.
+
+99
+00:10:39,370 --> 00:10:46,690
+And then, the interesting thing is that we can also visualize the uncertainty or this
+
+100
+00:10:46,690 --> 00:10:51,459
+covariance within the Kalman filter. So in this simulation we assume that the robot is
+
+101
+00:10:51,459 --> 00:10:58,790
+absolutely certain that it starts at the origin of the world, but the further it goes the
+
+102
+00:10:58,790 --> 00:11:07,670
+less certain it gets on its position. So the blue ellipse now denotes its uncertainty.
+
+103
+00:11:07,670 --> 00:11:16,440
+For example depending on which isoline you draw this could be the 95% isoline which means
+
+104
+00:11:16,440 --> 00:11:25,139
+that the probability mass within the circle has 95% of the total mass.
+
+105
+00:11:25,139 --> 00:11:33,440
+And now, after the first 10 steps for example, we give a rotation command to the robot so
+
+106
+00:11:33,440 --> 00:11:40,079
+it will turn by 90 degrees and move around and then move on. And as you can see the uncertainty
+
+107
+00:11:40,079 --> 00:11:47,279
+here of the robot state grows infinitely with every step the robot gets a little bit
+
+108
+00:11:47,279 --> 00:11:55,769
+less certain about where it is. But other than that, because we don't get any updates
+
+109
+00:11:55,769 --> 00:12:08,519
+we assume our zero mean noise assumption says we follow exactly the controls that we have
+
+110
+00:12:08,519 --> 00:12:14,959
+given to the robot. Now for this example now we just assume that
+
+111
+00:12:14,959 --> 00:12:21,959
+there is a large process noise for x and y in the odometry.
+
+112
+00:12:21,959 --> 00:12:29,500
+If we now additionally assume that we also have noise in our heading then the following
+
+113
+00:12:29,500 --> 00:12:37,209
+happens. I let this run for a few steps. So the interesting difference now is that
+
+114
+00:12:37,209 --> 00:12:46,940
+the uncertainty in y direction increases dramatically. I should say here that we still have the same
+
+115
+00:12:46,940 --> 00:12:51,600
+noise in x and y direction. But this new uncertainty comes now from the fact that the robot is
+
+116
+00:12:51,600 --> 00:12:57,459
+additionally uncertain about its current heading. So it doesn't really no, whether it's still
+
+117
+00:12:57,459 --> 00:13:04,120
+looking perfectly to the right or whether it has already turned to the left or to the
+
+118
+00:13:04,120 --> 00:13:11,509
+right. And also if it would go forward this would lead to a different position along the
+
+119
+00:13:11,509 --> 00:13:18,230
+y axis. And this is why this ellipse grows much more in y direction than it does in x
+
+120
+00:13:18,230 --> 00:13:27,410
+direction. And now here in this step the robot turns in y direction by 90 degrees and moves
+
+121
+00:13:27,410 --> 00:13:35,589
+on. Now it seems that this covariance actually rotates. This is actually not the case, so what
+
+122
+00:13:35,589 --> 00:13:40,850
+happens here is that we have a very large uncertainty in y direction plus the uncertainty
+
+123
+00:13:40,850 --> 00:13:46,769
+in our heading direction. And so the more the robot moves now the less certain it gets
+
+124
+00:13:46,769 --> 00:13:54,319
+again in x direction, in left right direction, you know along its motion. And so we actually
+
+125
+00:13:54,319 --> 00:14:01,009
+have an overlay of both the uncertainty in y direction that we had before plus new uncertainty
+
+126
+00:14:01,009 --> 00:14:08,879
+along the x direction now. And the combination of this two give this new ellipsoid.
+
+127
+00:14:08,879 --> 00:14:16,100
+And you can see that in combination now the heading uncertainty this ellipse really grows
+
+128
+00:14:16,100 --> 00:14:23,610
+massively, so the robot is absolutely uncertain after it does the round where it is located.
+
+129
+00:14:23,610 --> 00:14:29,180
+So and now we will add some observations, for that we assume that the robot can observe
+
+130
+00:14:29,180 --> 00:14:34,569
+a marker in the world. But this marker can only been seen by the
+
+131
+00:14:34,569 --> 00:14:42,079
+robot if it is close enough, so at this distance it cannot see the marker, and so the uncertainty
+
+132
+00:14:42,079 --> 00:14:48,129
+grows as before. So it starts at the origin and moves to the right and the uncertainty
+
+133
+00:14:48,129 --> 00:14:51,449
+grows. Now when it comes close to the marker it can
+
+134
+00:14:51,449 --> 00:14:57,360
+actually detect it for a while. And what we can see now is that the uncertainty shrinks
+
+135
+00:14:57,360 --> 00:15:03,740
+again because as long as it sees the marker it is perfectly certain or it is more certain
+
+136
+00:15:03,740 --> 00:15:08,459
+about its position than before. And then when it loses the visual contact
+
+137
+00:15:08,459 --> 00:15:13,069
+to the marker the uncertainty grows again as before.
+
+138
+00:15:13,069 --> 00:15:18,440
+Just to see this again, the uncertainty grows, when it detects the marker the uncertainty
+
+139
+00:15:18,440 --> 00:15:27,690
+shrinks and when it loses again the visual contact to the marker the uncertainty grows again.
+
+140
+00:15:27,690 --> 00:15:35,480
+So far we've assumed now that the robot has a good initial guess of its starting position.
+
+141
+00:15:35,480 --> 00:15:42,589
+And now, let's assume that we don't have a good guess. So the robot is actually still
+
+142
+00:15:42,589 --> 00:15:49,279
+moving from the origin indicated by these red crosses here but our Kalman Filter because
+
+143
+00:15:49,279 --> 00:15:57,209
+it has been initialized with a incorrect initial guess is actually moving at a different location.
+
+144
+00:15:57,209 --> 00:16:04,629
+So now the robot moves and has a growing covariance as before.
+
+145
+00:16:04,629 --> 00:16:17,399
+And then, as soon as it detects the marker it can actually compute or correct its position using the marker observation.
+
+146
+00:16:17,399 --> 00:16:24,360
+And then, you can see that it gets on track quite quickly and if it now moves around then
+
+147
+00:16:24,360 --> 00:16:27,329
+it remains on track because it had this observation.
+
+148
+00:16:27,329 --> 00:16:35,720
+So you can see how this marker pulls the state estimate to the right location.
+
+149
+00:16:35,720 --> 00:16:45,370
+And now, we additionally assume that our yaw estimate is wrong and we assume that we have
+
+150
+00:16:45,370 --> 00:16:51,180
+some noise on our yaw estimate, so we get again this ellipsoid as before but as you
+
+151
+00:16:51,180 --> 00:16:56,970
+can see we are relatively far away from the true position indicated by the red cross.
+
+152
+00:16:56,970 --> 00:17:05,260
+But now again, as soon as we detect the marker the Kalman Filter pulls us to the right location
+
+153
+00:17:05,260 --> 00:17:12,260
+and decreases correctly the covariance of the EKF.
+
+154
+00:17:12,260 --> 00:17:15,970
+And then again, as soon as we lose visual contact to the marker the covariance grows
+
+155
+00:17:15,970 --> 00:17:26,020
+again with the behavior that we have seen before.
+
+156
+00:17:26,020 --> 00:17:32,200
+So I've indicated this already before, if we have a bad initial guess then it is generally
+
+157
+00:17:32,200 --> 00:17:37,920
+a good idea, typically you don't know really where you are in the beginning, but just set the inital Sigma
+
+158
+00:17:37,920 --> 00:17:44,250
+to a large value. Because this means then that you state estimate is extremely uncertain
+
+159
+00:17:44,250 --> 00:17:48,280
+and this means that as soon as you get the first sensor observation that you will immediately
+
+160
+00:17:48,280 --> 00:17:55,510
+trust it because then your sensor is more accurate than your current estimate of your
+
+161
+00:17:55,510 --> 00:18:01,830
+the state. So for example here, we start with a relatively large ellipsoid and as you can
+
+162
+00:18:01,830 --> 00:18:08,400
+see the red crosses lies within this ellipsoid which is typically what we want. The real
+
+163
+00:18:08,400 --> 00:18:19,070
+state should be at a higher probability within your covariance ellipsoid and as soon as we
+
+164
+00:18:19,070 --> 00:18:26,890
+see the marker it converges on the right location. And if you would compare this plot now with the
+
+165
+00:18:26,890 --> 00:18:31,830
+plot that we had before then you could see that it converges much faster to marker because
+
+166
+00:18:31,830 --> 00:18:38,570
+the marker gets more weight because it is actually intersecting the uncertainty,
+
+167
+00:18:38,570 --> 00:18:44,820
+the observation of the marker, which is a Gaussian with our state estimate, which is
+
+168
+00:18:44,820 --> 00:18:54,620
+Gaussian again. And then we trust of course more to the Gaussian with the smaller covariance.
+
+169
+00:18:54,620 --> 00:19:01,080
+The main difference to the previous plot is that it converges faster because now our uncertainty
+
+170
+00:19:01,080 --> 00:19:07,290
+of the state is so large that we will trust the marker observation immediately.
+
+171
+00:19:07,290 --> 00:19:12,710
+Now one last example again, we have a wrong initialization. The marker is now located
+
+172
+00:19:12,710 --> 00:19:19,750
+in the middle and whenever the robot comes close enough it sees this marker and can reduce
+
+173
+00:19:19,750 --> 00:19:25,940
+its uncertainty.
+
+174
+00:19:25,940 --> 00:19:33,130
+So to summarize the video of today, we have given a nice visualization or a 2D example
+
+175
+00:19:33,130 --> 00:19:37,660
+of the Extended Kalman Filter. We have shown all steps of the derivation
+
+176
+00:19:37,660 --> 00:19:42,960
+of the motion model and the construction and derivation of the sensor model. And we have
+
+177
+00:19:42,960 --> 23:59:59,999
+discussed several example runs of the Kalman Filter.
+

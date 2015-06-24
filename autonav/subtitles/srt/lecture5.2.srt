@@ -1,0 +1,516 @@
+1
+00:00:01,120 --> 00:00:07,040
+Hello and welcome everybody to lecture 5.2 in this video we will give a short recap on
+
+2
+00:00:07,040 --> 00:00:10,190
+probability theory. And the reason for that is that I thought that
+
+3
+00:00:10,190 --> 00:00:15,599
+before we go on with the Bayes Filter and the Kalman Filter that it doesn't hurt to briefly
+
+4
+00:00:15,599 --> 00:00:23,000
+review the basics of probability theory, just to make sure that we have all the same background.
+
+5
+00:00:23,000 --> 00:00:29,500
+I actually hope that most of the concepts present in this video will already be familiar
+
+6
+00:00:29,500 --> 00:00:35,379
+to you, but if not then I would really urge you to look at a preliminary course on probability
+
+7
+00:00:35,379 --> 00:00:41,149
+theory before you continue with this course.
+
+8
+00:00:41,149 --> 00:00:46,600
+So the basic idea behind probability theory is that we have a random experiment that can
+
+9
+00:00:46,600 --> 00:00:52,350
+produce a number of possible outcomes. For example, we can role a dice, and then this
+
+10
+00:00:52,350 --> 00:00:59,079
+dice can produce different outcomes from 1 to 6 for example. And then, this space of
+
+11
+00:00:59,079 --> 00:01:04,530
+possible outcomes is called the sample space. And now, we can talk about events that can
+
+12
+00:01:04,530 --> 00:01:11,040
+occur. And in principle an event is an element of the power set of this sample space. So
+
+13
+00:01:11,040 --> 00:01:18,300
+one possible event A could be that we are interested in even numbers, so A would correspond
+
+14
+00:01:18,300 --> 00:01:26,850
+to the subset of 2, 4 and 6. And now we can talk about the probability of this event to
+
+15
+00:01:26,850 --> 00:01:37,900
+happen. This would be denoted by P(A). And in this particular example the probability of this proposition would be 0.5.
+
+16
+00:01:37,900 --> 00:01:43,900
+In general there are 3 axioms behind modern probability theory. The probability of such
+
+17
+00:01:43,900 --> 00:01:52,070
+an event is always a number between 0 and 1. And there is the set of all possible
+
+18
+00:01:52,070 --> 00:02:00,250
+outcomes, which is called omega. And the probability of omega is always 1. Which is an event that
+
+19
+00:02:00,250 --> 00:02:04,920
+always happens no matter what the outcome is of our random experiment.
+
+20
+00:02:04,920 --> 00:02:15,900
+And the probability on the other hand of the empty set of outcomes of course never occurs. 
+
+21
+00:02:15,900 --> 00:02:19,950
+So the probability of the empty set is 0.
+
+22
+00:02:19,950 --> 00:02:30,000
+And there is a third axiom that says: if you're interested in the probability of the combination of two events,
+
+23
+00:02:30,000 --> 00:02:41,799
+then this equals the probability of event one P(A) plus the probability of event B minus the intersection between these two events.
+
+24
+00:02:41,799 --> 00:02:49,950
+So it might happen that event A and B have some outcomes in common and if we wouldn't subtract
+
+25
+00:02:49,950 --> 00:02:56,290
+the probability of this intersection, then we would count certain outcomes twice.
+
+26
+00:02:56,290 --> 00:03:07,349
+Now, the next concept is the so called random variable. We start with discrete random variables,
+
+27
+00:03:07,349 --> 00:03:12,510
+which is just denoted by a capital letter say X for example. And a discrete random variable
+
+28
+00:03:12,510 --> 00:03:19,239
+can take only accountable number of values, x_1 to x_n for example.
+
+29
+00:03:19,239 --> 00:03:27,849
+And then the notation P(X = x_i) refers to the probability that this random variable
+
+30
+00:03:27,849 --> 00:03:38,300
+X actually takes a particular value x_i. And then, this function P is called the probability mass function.
+
+31
+00:03:38,300 --> 00:03:44,909
+Now, in most cases actually we are dealing with continuous random variables; for example,
+
+32
+00:03:44,909 --> 00:03:50,800
+because we want to model the position of a robot in 2D or in 3D.
+
+33
+00:03:50,800 --> 00:03:59,079
+And then X would be a continuous random variable. And then, the problem is that we can't really
+
+34
+00:03:59,079 --> 00:04:05,689
+specify anymore the probability that X takes a particular value, say that the robot is exactly
+
+35
+00:04:05,689 --> 00:04:11,430
+at X equals 3. You know the probability for any element of
+
+36
+00:04:11,430 --> 00:04:19,930
+this set would go to 0 actually. So instead of stating the absolute probability of a certain
+
+37
+00:04:19,930 --> 00:04:25,690
+event we are now talking about the density function,
+
+38
+00:04:25,690 --> 00:04:34,770
+which is denoted by a lower case letter p. And the relation between this density and
+
+39
+00:04:34,770 --> 00:04:40,900
+the probability is that when we are looking at an interval in this continuous space for
+
+40
+00:04:40,900 --> 00:04:49,280
+example if x is between a and b, then the probability is equal to the integral over
+
+41
+00:04:49,280 --> 00:04:53,740
+the density of x in this interval.
+
+42
+00:04:53,740 --> 00:05:00,400
+And to understand or to look at this graphically imagine now the robot is driving along a corridor
+
+43
+00:05:00,400 --> 00:05:09,310
+and it has a certain likelihood. It sees a door knob and so it inferred a probability
+
+44
+00:05:09,310 --> 00:05:14,710
+distribution form which it knows that it stands in front of door.
+
+45
+00:05:14,710 --> 00:05:22,400
+And then, this probability density function could look as follows: there are certain peaks
+
+46
+00:05:22,400 --> 00:05:26,900
+in front of doors and then depending on the sensor model and the motion model as you will
+
+47
+00:05:26,900 --> 00:05:34,699
+see later some of these peaks might be stronger than others.
+
+48
+00:05:34,699 --> 00:05:42,050
+The next property of proper probability distribution is that it always sums to 1. The reason for
+
+49
+00:05:42,050 --> 00:05:50,099
+that is that if we look at all possible values that x can take, then we are actually looking
+
+50
+00:05:50,099 --> 00:05:54,210
+at the full set omega and the probability of omega is 1.
+
+51
+00:05:54,210 --> 00:06:02,789
+And so if we marginalize out this variable we have to obtain 1.
+
+52
+00:06:02,789 --> 00:06:12,580
+The same holds also for the continuous case but then we need to integrate over the domain of x.
+
+53
+00:06:12,580 --> 00:06:17,610
+The next concept is the so called joint probability. This reverse to the case where we have
+
+54
+00:06:17,610 --> 00:06:24,530
+2 random variables or more, say X and Y for example that could encode the 2D position
+
+55
+00:06:24,530 --> 00:06:37,669
+of a robot in x and y direction. And then, we can write this as P(X = x and Y = y )
+
+56
+00:06:37,669 --> 00:06:47,550
+And just as a shortened we often then just write a P(x,y) to keep the notation intuitive
+
+57
+00:06:47,550 --> 00:06:55,199
+and understandable. Of course, we always make sure then that the symbol that we use for the values
+
+58
+00:06:55,199 --> 00:07:04,819
+is the same as the symbol for the random variables, so X equals x and then Y equals y in this case.
+
+59
+00:07:04,819 --> 00:07:10,900
+So if X and Y are independent variables, then they don't influence each other. They describe
+
+60
+00:07:10,900 --> 00:07:20,110
+different properties of the world and then this joint probability of X and Y actually
+
+61
+00:07:20,110 --> 00:07:28,340
+corresponds to the individual probabilities of x times the probability y.
+
+62
+00:07:28,340 --> 00:07:38,389
+And now the notion P(x|y) is called conditional probability, which says
+
+63
+00:07:38,389 --> 00:07:50,580
+that if we already know that y takes a particular value, then how does this influence our probability distribution over x.
+
+64
+00:07:50,580 --> 00:07:58,840
+For example, if we throw a dice and this dice can take values between 1 and 6, and a normal
+
+65
+00:07:58,840 --> 00:08:06,080
+dice you know gives you a uniform distribution. And now, say random variable X encodes the value that
+
+66
+00:08:06,080 --> 00:08:12,139
+we are getting from the dice. And now, we could define a second variable Y that is just binary
+
+67
+00:08:12,139 --> 00:08:17,009
+and tells us whether the number that we've thrown is even or uneven.
+
+68
+00:08:17,009 --> 00:08:23,379
+And now if we would know that the number that we have thrown is even for example, then the
+
+69
+00:08:23,379 --> 00:08:29,419
+probability distribution over X is of course not uniform anymore, but the likelihood of
+
+70
+00:08:29,419 --> 00:08:36,200
+even number then is 1/3 and the probability of uneven numbers is 0, given that we know that
+
+71
+00:08:36,200 --> 00:08:38,860
+the number has to be even.
+
+72
+00:08:38,860 --> 00:08:45,709
+And then, mathematically speaking this corresponds to the following equation,
+
+73
+00:08:45,709 --> 00:08:59,209
+so the conditional probability P(x|y)P(y) equals exactly the joint probability P(x,y) of x and y.
+
+74
+00:08:59,209 --> 00:09:05,300
+And now, if X and Y are independent again, completely independent, so they don't say anything about
+
+75
+00:09:05,300 --> 00:09:11,690
+each other. Then the conditional probability of P(x|y) just equals the probability
+
+76
+00:09:11,690 --> 00:09:19,100
+of x, P(x). Because knowledge of Y does not influence the probability distribution of X.
+
+77
+00:09:19,100 --> 00:09:24,800
+So if we introduce now a third random variable Z we can also talk about the conditional
+
+78
+00:09:24,800 --> 00:09:28,490
+independence between to variables. So for example, if we are looking at the probability
+
+79
+00:09:28,490 --> 00:09:47,709
+distribution over P(x,y|z) then this can corresponds to the product of the conditional probability of P(x|z)P(y|z).
+
+80
+00:09:47,709 --> 00:09:56,300
+Note that this does not imply that X and Y are independent but they are in this case
+
+81
+00:09:56,300 --> 00:10:01,380
+independent as long as we know the value of Z.
+
+82
+00:10:01,380 --> 00:10:08,630
+And this notation now is actually equivalent to the following two things,
+
+83
+00:10:08,630 --> 00:10:17,610
+so it says that: if the knowledge of Y does not change our probability distribution over
+
+84
+00:10:17,610 --> 00:10:31,699
+X and vice versa, then the two variables X and Y are conditional independent given Z.
+
+85
+00:10:31,699 --> 00:10:36,670
+The next concept is called marginalization, if we are looking at a joint probability distribution
+
+86
+00:10:36,670 --> 00:10:45,800
+P(x,y) for example, and we marginalize out Y, which means  that we are no longer interested in the value of Y.
+
+87
+00:10:45,800 --> 00:10:52,779
+And we sum up over all possible values that Y can take, then we obtain the probability distribution just over X.
+
+88
+00:10:52,779 --> 00:11:01,279
+So in this way we can generate the marginalized distribution over X from the joint distribution over X and Y.
+
+89
+00:11:01,279 --> 00:11:09,899
+And again, you have two cases because we could have a discrete random variable for which
+
+90
+00:11:09,899 --> 00:11:14,990
+we would specify the probability mass function or we could have a continuous variable for
+
+91
+00:11:14,990 --> 00:11:18,370
+which we would have to specify the probability density function.
+
+92
+00:11:18,370 --> 00:11:24,290
+And just to illustrate this with an example, imagine that we have the following joint probability
+
+93
+00:11:24,290 --> 00:11:28,639
+distribution between to variables X and Y.
+
+94
+00:11:28,639 --> 00:11:37,300
+And X can take different values x_1 to x_4 and Y can take different values from y_1 to y_4.
+
+95
+00:11:37,300 --> 00:11:44,400
+And then we have a certain joint probability table that we can specify using these 16 different values
+
+96
+00:11:44,400 --> 00:11:52,610
+And now we can marginalize over X for example, to just obtain the probability of Y independent
+
+97
+00:11:52,610 --> 00:12:01,850
+of X, and then, we obtain the row on the right side or we could marginalize out the y's, and
+
+98
+00:12:01,850 --> 00:12:10,200
+then, sum over the probabilities row wise and obtain the last row.
+
+99
+00:12:10,200 --> 00:12:19,269
+So the next important concept is the expected value of a random variable. This means if
+
+100
+00:12:19,269 --> 00:12:25,720
+we roll a dice and we would like to know what is the average value that we are getting out
+
+101
+00:12:25,720 --> 00:12:31,600
+of it? How many steps can we move forward with our figure in a board game for example?
+
+102
+00:12:31,600 --> 00:12:39,279
+Then we would compute the weighted average of all values that a random variable can take
+
+103
+00:12:39,279 --> 00:12:46,839
+on. So for example, if this random variable can take values of x_i, then we would multiply
+
+104
+00:12:46,839 --> 00:12:52,529
+this value with the probability that the random variable actually takes for this value
+
+105
+00:12:52,529 --> 00:12:55,980
+and this actually gives us then the expected value of this random variable.
+
+106
+00:12:55,980 --> 00:13:02,269
+In the continuous case you would have to take the integral over the whole range of values
+
+107
+00:13:02,269 --> 00:13:05,829
+that this random varibale can take on.
+
+108
+00:13:05,829 --> 00:13:10,079
+And it is important to note here that the expectation is actually a linear operator,
+
+109
+00:13:10,079 --> 00:13:19,120
+so if we are looking at an expression E[a X + b] then we can pull
+
+110
+00:13:19,120 --> 00:13:24,870
+out the factor and the offset from the expectation operator and directly compute the expectation
+
+111
+00:13:24,870 --> 00:13:28,420
+of X and then do our computations afterwards.
+
+112
+00:13:28,420 --> 00:13:35,670
+The second important concept is the covariance of a random variable.
+
+113
+00:13:35,670 --> 00:13:42,500
+And it just measures the squared expected deviation from the mean. So it says how large our spread is.
+
+114
+00:13:42,500 --> 00:13:50,579
+In the 1 dimensional case this is also the variance, if we have a multivariate problem
+
+115
+00:13:50,579 --> 00:13:58,420
+with multiple random variables then it is the covariance matrix that you've might have seen before.
+
+116
+00:13:58,420 --> 00:14:05,459
+Now, if we need to estimate this mean or the covariance from observations that we are getting
+
+117
+00:14:05,459 --> 00:14:11,139
+from our sensors for example. Imagine that we have a GPS sensor and that continuously gives
+
+118
+00:14:11,139 --> 00:14:20,900
+us 3D position estimates of our quadrotor, then we would get a sequence of position observations x_1 to x_n
+
+119
+00:14:20,900 --> 00:14:30,639
+from a 3 dimensional space. And then, we would like to know what our average position is. We could just sum over all of these observations
+
+120
+00:14:30,639 --> 00:14:35,110
+and divide by the number of observations that we got and this then called the sample mean.
+
+121
+00:14:35,110 --> 00:14:43,800
+And at the same time we you could compute the sample covariance just by removing the mean from
+
+122
+00:14:43,800 --> 00:14:49,899
+all our observations taking the dot product with the transposed vector and normalizing
+
+123
+00:14:49,899 --> 00:14:55,470
+it by 1 over (n-1). And then, this gives us the spread over the GPS signal
+
+124
+00:14:55,470 --> 00:15:00,899
+for example, which typically is around 3 to 5 meters.
+
+125
+00:15:00,899 --> 00:15:06,180
+So this was a quick recap on probability theory we have introduced random variables,
+
+126
+00:15:06,180 --> 00:15:11,269
+we've looked at joint and conditional probabilities. We've looked at marginalization,
+
+127
+00:15:11,269 --> 00:15:17,269
+and we looked at the sample mean and the sample covariance, and how to compute that from data.
+
+128
+00:15:17,269 --> 00:15:22,100
+And now this forms a very good basis for the next video where we will introduce Bayes law
+
+129
+00:15:22,100 --> 23:59:59,999
+and give some examples.
+

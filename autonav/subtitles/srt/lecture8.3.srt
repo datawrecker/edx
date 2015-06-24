@@ -1,0 +1,1124 @@
+1
+00:00:00,880 --> 00:00:03,170
+Welcome back everybody to lecture video 8.3.
+
+2
+00:00:03,170 --> 00:00:11,220
+We looked before at feature based visual SLAM method in particular for navigating the ArDrone
+
+3
+00:00:11,220 --> 00:00:16,109
+visually. And in contrast to that we will focus in this video now on so called direct
+
+4
+00:00:16,109 --> 00:00:21,859
+methods for visual odometry and visual SLAM that essentially are an extension of the KLT
+
+5
+00:00:21,859 --> 00:00:26,319
+tracker in the 2D case to full 3D.
+
+6
+00:00:26,319 --> 00:00:30,949
+And to see why this is actually a good idea let's look at the following video. This is
+
+7
+00:00:30,949 --> 00:00:39,520
+just a video feed from the quadrotor the ArDrone here is flying through one of our offices.
+
+8
+00:00:39,520 --> 00:00:44,650
+And you see you get a bit shaky image, but nevertheless, as a human when you looking
+
+9
+00:00:44,650 --> 00:00:49,030
+at it you get a quite good understanding of how the scene looks like and you also can
+
+10
+00:00:49,030 --> 00:00:53,870
+imagine very well where the robot is currently looking at.
+
+11
+00:00:53,870 --> 00:00:58,920
+And now if we run that through a feature based visual SLAM system like PTAM. And we have
+
+12
+00:00:58,920 --> 00:01:05,159
+seen that PTAM works generally really well. And then, PTAM is actually only focusing on
+
+13
+00:01:05,159 --> 00:01:13,499
+so called feature points that have strong gradients and it rejects everything else.
+
+14
+00:01:13,499 --> 00:01:19,380
+And then, again suddenly not so easy any more to see how the quadrotor is moving in 3D space
+
+15
+00:01:19,380 --> 00:01:25,639
+and it's also not so easy at all to see how the world looks like. Because we're actually ignoring
+
+16
+00:01:25,639 --> 00:01:30,179
+or just not observing large parts of the world.
+
+17
+00:01:30,179 --> 00:01:37,280
+So when we realize that - maybe two years ago - why not focus
+
+18
+00:01:37,280 --> 00:01:43,270
+on methods that use more of the image data, maybe all of the available image data. And
+
+19
+00:01:43,270 --> 00:01:51,090
+then, we came up with the following approach and I should say here for the moment we assume
+
+20
+00:01:51,090 --> 00:01:58,009
+that we have a depth camera but we will relax this later on to just a normal monocular camera.
+
+21
+00:01:58,009 --> 00:02:02,950
+So imagine that we have such a depth camera and it's located at a particular 3D pose looking
+
+22
+00:02:02,950 --> 00:02:09,560
+at the world. And then this camera get moved to a second location and takes another image
+
+23
+00:02:09,560 --> 00:02:17,490
+of the same scene. And then, of course we would like to know what the 3D transformation
+
+24
+00:02:17,490 --> 00:02:23,320
+between these two camera poses is. And now, the basic idea here is to exploit the so called
+
+25
+00:02:23,320 --> 00:02:28,300
+photo-consistency constraint, namely if we look at a particular point in the world from
+
+26
+00:02:28,300 --> 00:02:34,540
+one image we can reconstruct it in 3D because we have the depth of this pixel. And then,
+
+27
+00:02:34,540 --> 00:02:42,870
+we can reproject that if we knew the transformation between two images we could transform this
+
+28
+00:02:42,870 --> 00:02:48,070
+point in the coordinate frame of the second image. And then, ideally the intensity or
+
+29
+00:02:48,070 --> 00:02:54,940
+the color of this pixel should exactly match the color of the first image. And this photo
+
+30
+00:02:54,940 --> 00:03:00,480
+consistency constrain actually holds for all pixels. And this means that in contrast to
+
+31
+00:03:00,480 --> 00:03:06,910
+only say maybe a 100 or 200 visual features that we're tracking. This photo consistency
+
+32
+00:03:06,910 --> 00:03:10,600
+constraint should hold for all pixel in the image. And even if you're only dealing with
+
+33
+00:03:10,600 --> 00:03:18,720
+VGA images, 640x480, this gives you 200.000 constraints or a little bit more that you
+
+34
+00:03:18,720 --> 00:03:25,160
+can use to estimate your 3D pose.
+
+35
+00:03:25,160 --> 00:03:29,100
+So of course you could say that that photo consistency constrain will never perfectly
+
+36
+00:03:29,100 --> 00:03:34,180
+hold for various reasons. First, the most obvious one is that we of course have sensor
+
+37
+00:03:34,180 --> 00:03:39,000
+noise, so even if you take two images from the same camera pose the difference image
+
+38
+00:03:39,000 --> 00:03:45,120
+will not be zero. Of course we might have some error in our pose estimation, so if you
+
+39
+00:03:45,120 --> 00:03:50,960
+take the difference there might be some scenes in the image that give non zero residuals.
+
+40
+00:03:50,960 --> 00:03:55,720
+There might also be a reflection and specular surfaces you know they appear in a different
+
+41
+00:03:55,720 --> 00:04:00,760
+color depending on the pose from where you are looking at them.
+
+42
+00:04:00,760 --> 00:04:06,180
+And there might be dynamic objects the world might not be static, things might disappear
+
+43
+00:04:06,180 --> 00:04:12,810
+or appear in the world. And all of this violates of course this photo consistency constraint.
+
+44
+00:04:12,810 --> 00:04:18,149
+And in sum this means that although most of the residuals will be close to zero some of
+
+45
+00:04:18,149 --> 00:04:25,530
+them will be not exactly zero at our optimization goal. And so if we look at the residuals and
+
+46
+00:04:25,530 --> 00:04:32,550
+the residual is now defined as the difference between the first image minus the warped second
+
+47
+00:04:32,550 --> 00:04:36,050
+image. Then this residuals will in general be non-zero.
+
+48
+00:04:36,050 --> 00:04:42,740
+And of course, then it makes sense to look at the distribution of this residuals. And
+
+49
+00:04:42,740 --> 00:04:50,880
+then, for a good camera pose in a reasonable scene we would expect that the residual is
+
+50
+00:04:50,880 --> 00:04:58,800
+around zero. So there should be a peak at zero and a relatively small variance in principle
+
+51
+00:04:58,800 --> 00:05:05,520
+according to the sensor noise of our camera. Of course, if we're not having the right camera
+
+52
+00:05:05,520 --> 00:05:11,020
+pose. Then the distribution of residuals is much broader because we suddenly compare the
+
+53
+00:05:11,020 --> 00:05:20,450
+intensities and colors of pixels that do not correspond. And then, as a result we get a
+
+54
+00:05:20,450 --> 00:05:25,250
+much larger residual in general and then this distribution might more look like this. So
+
+55
+00:05:25,250 --> 00:05:31,419
+the question then intuitively speaking is: how can we actually transform this very broad
+
+56
+00:05:31,419 --> 00:05:39,100
+distribution in a very peak distribution by modifying the camera pose.
+
+57
+00:05:39,100 --> 00:05:46,070
+And if we put this mathematically then our goal is to find a camera pose that actually
+
+58
+00:05:46,070 --> 00:05:53,320
+maximizes the observation likelihood of this residual distribution in the good case. So
+
+59
+00:05:53,320 --> 00:06:01,639
+we look at the probability every single residual given a certain camera transformation Xi then
+
+60
+00:06:01,639 --> 00:06:06,960
+we multiply this likelihood. If we assume that all pixels are independent that's of course
+
+61
+00:06:06,960 --> 00:06:11,449
+not always the case but it's a good enough approximation. So you can just multiply all
+
+62
+00:06:11,449 --> 00:06:22,180
+of these probabilities together and then maximize this product to find the right camera pose.
+
+63
+00:06:22,180 --> 00:06:27,510
+And now the question of course is how can we solve this optimization problem efficiently?
+
+64
+00:06:27,510 --> 00:06:31,460
+And for that we again employ the so called Gauss-Newton algorithm that you have seen
+
+65
+00:06:31,460 --> 00:06:36,389
+before for KLT tracking but also for signed distance functions in the previous video.
+
+66
+00:06:36,389 --> 00:06:42,040
+And before we apply that actually we first take the negative logarithm that just simplifies
+
+67
+00:06:42,040 --> 00:06:49,150
+our computations enormously because that turns the product into a sum. And now instead of
+
+68
+00:06:49,150 --> 00:06:54,930
+finding the maximum we can look for the minimum. And at the minimum you all know that the derivative
+
+69
+00:06:54,930 --> 00:07:00,699
+has to be zero there. Otherwise it would not be a minimum. So what we can do is to derive
+
+70
+00:07:00,699 --> 00:07:05,139
+this expression and set the derivative then to zero.
+
+71
+00:07:05,139 --> 00:07:11,100
+And because this a chained expression here we can apply the chain rule for derivation
+
+72
+00:07:11,100 --> 00:07:18,240
+and that gives us this term here in the middle where we first derive the logarithmic probability
+
+73
+00:07:18,240 --> 00:07:23,550
+with respect to our residuals and then we derive again the residuals with respect to
+
+74
+00:07:23,550 --> 00:07:29,360
+our camera motion. And then this sum is set to zero.
+
+75
+00:07:29,360 --> 00:07:35,490
+So one problem here is now that just using a quadratic cost term corresponds to a normal
+
+76
+00:07:35,490 --> 00:07:41,139
+distribution is actually not very robust. You see an illustration of that in a second.
+
+77
+00:07:41,139 --> 00:07:48,310
+But the good news is given that this formulation that we had before can actually plug in arbitrary
+
+78
+00:07:48,310 --> 00:07:56,550
+probability distributions for our residuals just by rewriting the minimization problem
+
+79
+00:07:56,550 --> 00:08:02,650
+as a so called least square problem. We can still minimize it as if it was a quadratic
+
+80
+00:08:02,650 --> 00:08:07,949
+error function. And now one problem obviously is that the residual function computes the
+
+81
+00:08:07,949 --> 00:08:16,210
+residuals. The difference between two images given of a particular pixel, given a 3D transformation
+
+82
+00:08:16,210 --> 00:08:22,620
+is not linear because we have rotations in Xi. And so, what we can do is to linearize
+
+83
+00:08:22,620 --> 00:08:30,639
+then the cost function or the residual function using a Taylor approximation then solve for
+
+84
+00:08:30,639 --> 00:08:35,039
+the minimum and then relinearize and then do the same again.
+
+85
+00:08:35,039 --> 00:08:40,789
+And this method is called the Gauss-Newton method for minimization.
+
+86
+00:08:40,789 --> 00:08:45,820
+Just to illustrate how this different cost functions look like. The normal distribution
+
+87
+00:08:45,820 --> 00:08:49,200
+is the most obvious one. So if you implement something like this you would always start
+
+88
+00:08:49,200 --> 00:08:54,290
+with a normal distribution which leads to a quadratic error function in the end. And
+
+89
+00:08:54,290 --> 00:09:01,290
+the disadvantage here is that large residuals give very large cost terms. And this means
+
+90
+00:09:01,290 --> 00:09:06,970
+that out layers on you image for example due to reflections, due to moving objects and
+
+91
+00:09:06,970 --> 00:09:13,160
+so on and so on, give you very large error terms and will actually push your estimate
+
+92
+00:09:13,160 --> 00:09:22,200
+to the wrong minimum. And so it makes actually sense to discard
+
+93
+00:09:22,200 --> 00:09:27,240
+pixels that has a too high residuals just because you saying these pixels are outliers
+
+94
+00:09:27,240 --> 00:09:33,390
+and you want to use them in our estimation. And one option then is to use Tukey weights
+
+95
+00:09:33,390 --> 00:09:43,510
+that just down weights an error after a certain threshold. The disadvantage there is depending
+
+96
+00:09:43,510 --> 00:09:48,920
+on your camera motion it could actually happen that you moving much too fast and that
+
+97
+00:09:48,920 --> 00:09:53,850
+everything is actually treaded as an outlier and you can't estimate your camera pose at
+
+98
+00:09:53,850 --> 00:09:58,350
+all because everything is considered as an outlier with zero costs and you're actually
+
+99
+00:09:58,350 --> 00:09:59,460
+not converting at all.
+
+100
+00:09:59,460 --> 00:10:07,350
+The alternative is and this is what Christian Kerl then proposed in this ICRA paper in 2013
+
+101
+00:10:07,350 --> 00:10:13,010
+is to apply a so called t distribution that leads to this to the cost function shown in
+
+102
+00:10:13,010 --> 00:10:17,240
+blue. So where we have a kind of a quadratic term
+
+103
+00:10:17,240 --> 00:10:23,390
+in the middle and the further we go out to the sides the more it converges towards a
+
+104
+00:10:23,390 --> 00:10:29,480
+certain limit. And this means that outlier pixel still have a certain weight. The algorithm
+
+105
+00:10:29,480 --> 00:10:36,010
+still tries to get rid of outliers as much as possible but it will not discard the images
+
+106
+00:10:36,010 --> 00:10:39,430
+because they are outliers.
+
+107
+00:10:39,430 --> 00:10:44,200
+So just to give you an example how these different images and residual images look like. Imagine
+
+108
+00:10:44,200 --> 00:10:49,040
+we have these two input images shown on top. Of course both of these input images have
+
+109
+00:10:49,040 --> 00:10:55,480
+a depth image that we are getting from Kinect or from a Kinect like sensor. And then we
+
+110
+00:10:55,480 --> 00:10:59,990
+ can take the difference between these two images and then we are getting these edge
+
+111
+00:10:59,990 --> 00:11:06,399
+image, looks more or less like an edge image actually. And now you can wonder what would happen to
+
+112
+00:11:06,399 --> 00:11:16,470
+my residual image if I would move around a virtual camera that is looking at the point
+
+113
+00:11:16,470 --> 00:11:23,430
+cloud of the second image. And by moving this camera around we could move it closer to our
+
+114
+00:11:23,430 --> 00:11:28,709
+first input image - the pose of the first camera. And then ideally given that this photo consistency
+
+115
+00:11:28,709 --> 00:11:34,430
+constraint holds we would get a black image for the residuals. And now what Gauss-Newton
+
+116
+00:11:34,430 --> 00:11:39,060
+does is actually to linearize this residual function at our current pose estimate. So
+
+117
+00:11:39,060 --> 00:11:43,830
+we're computing an image Jacobian that tells us how the image changes in brightness if
+
+118
+00:11:43,830 --> 00:11:49,170
+we move the camera a long all six coordinate axes. So if you move it forward, backward,
+
+119
+00:11:49,170 --> 00:11:57,100
+left, right, up and down and if we rotate it around its three rotation axes.
+
+120
+00:11:57,100 --> 00:12:04,470
+And we now try to rotate it to find actually this zero residual image that we are looking
+
+121
+00:12:04,470 --> 00:12:10,180
+for. One problem of course of this linearization step is that it only holds for very small
+
+122
+00:12:10,180 --> 00:12:17,019
+camera motions. So if you're are moving by more than one pixel actually or a few pixels
+
+123
+00:12:17,019 --> 00:12:23,269
+then actually this linearization is not valid anymore. And so but what you can do then is
+
+124
+00:12:23,269 --> 00:12:28,209
+to apply a coarse-to-find scheme. You have seen that before with the KLT tracker in 2D.
+
+125
+00:12:28,209 --> 00:12:34,290
+You build an image pyramid and then you first match the smallest coarsest images on the
+
+126
+00:12:34,290 --> 00:12:40,500
+highest pyramid level. And then, you use the estimated motion to initialize again Gauss-Newton
+
+127
+00:12:40,500 --> 00:12:48,519
+at the next layer, find the next camera motion between those and so on and so on.
+
+128
+00:12:48,519 --> 00:12:54,660
+And this means that you're running maybe four or five image pyramid layers and you running
+
+129
+00:12:54,660 --> 00:12:59,350
+a full Gauss-Newton at every layer that takes maybe four to five iterations sometimes it
+
+130
+00:12:59,350 --> 00:13:09,410
+even converges quicker. And at the end you even obtain a very high accuracy camera pose estimate.
+
+131
+00:13:09,410 --> 00:13:15,269
+And to see how this looks like in practice. This is a video that we rendered from one
+
+132
+00:13:15,269 --> 00:13:21,100
+of the benchmark sequences from the TUM RGB-D benchmark. Here a camera was moved around an otherwise
+
+133
+00:13:21,100 --> 00:13:29,110
+static scene and we now run this direct visual odometry algorithm to estimate the motion
+
+134
+00:13:29,110 --> 00:13:35,959
+between two consecutive RGB-D frames. And then, we just concatenate this transformation
+
+135
+00:13:35,959 --> 00:13:44,240
+on and on over all 2000 images of the sequence. And then, we render that as the red line you
+
+136
+00:13:44,240 --> 00:13:50,899
+are seeing here. And now one interesting thing is that you here can see that the world by
+
+137
+00:13:50,899 --> 00:13:58,700
+itself is not moving at all or only moving very slowly. And this actually shows that
+
+138
+00:13:58,700 --> 00:14:06,529
+the method has a very low drift. So because in principle if you would match two consecutive
+
+139
+00:14:06,529 --> 00:14:13,649
+images there is always a certain drift between them. But then this drift accumulates up the
+
+140
+00:14:13,649 --> 00:14:20,600
+longer you go of course but in this example you can see that even if we go around for
+
+141
+00:14:20,600 --> 00:14:27,690
+more than a minute or so around this table the drift is still there you can see at
+
+142
+00:14:27,690 --> 00:14:34,829
+the end of this video the table has moved slightly, maybe for 30 centimeters or so and
+
+143
+00:14:34,829 --> 00:14:39,620
+there is a slight rotation. But given the large number of images and the purely pairwise
+
+144
+00:14:39,620 --> 00:14:42,680
+matching there was actually not too much of difference.
+
+145
+00:14:42,680 --> 00:14:49,829
+And now here at the end of the video Christian overlaid, the blue point cloud is the reference
+
+146
+00:14:49,829 --> 00:14:53,660
+point cloud from the very first frame and the colored one is the point cloud from the
+
+147
+00:14:53,660 --> 00:14:59,640
+very last frame. And you can see that there is a certain drift here in the camera pose
+
+148
+00:14:59,640 --> 00:15:00,980
+but it is not too bad.
+
+149
+00:15:00,980 --> 00:15:06,130
+And the good news is now that this method is actually runs in real time on a single
+
+150
+00:15:06,130 --> 00:15:13,279
+CPU core because all operations that you need to do to estimate the motion are extremely
+
+151
+00:15:13,279 --> 00:15:17,480
+simple. You always just need to compute the difference between one image and the warped
+
+152
+00:15:17,480 --> 00:15:22,579
+second image. And this can be done extremely quickly on a normal CPU. You can of course
+
+153
+00:15:22,579 --> 00:15:28,350
+also be parallelized easily. And this means we can now exploit the full image information
+
+154
+00:15:28,350 --> 00:15:36,850
+from a RGB-D camera to estimate directly the geometry between two frames. Now as we have
+
+155
+00:15:36,850 --> 00:15:42,430
+seen already of course the dense or direct visual odometry takes two RGB-D frames as
+
+156
+00:15:42,430 --> 00:15:46,240
+input and gives us the relative poses output.
+
+157
+00:15:46,240 --> 00:15:51,139
+But still one problem here is that dense visual odometry suffers from drift. You've seen it
+
+158
+00:15:51,139 --> 00:15:56,570
+in the video in the end of this very long trajectory we accumulate a certain drift.
+
+159
+00:15:56,570 --> 00:16:02,360
+And now the question is: how can we actually eliminate this drift further to stabilize
+
+160
+00:16:02,360 --> 00:16:08,290
+the camera pose estimation. And the idea then that Christian came up with
+
+161
+00:16:08,290 --> 00:16:14,029
+last summer is to extend this into a full pose graph SLAM system. Were we again like
+
+162
+00:16:14,029 --> 00:16:20,209
+PTAM select certain key frames. We try to detect loop closures and add additional edges
+
+163
+00:16:20,209 --> 00:16:26,529
+in between. And then, we optimize in between and build this pose graph using existing libraries.
+
+164
+00:16:26,529 --> 00:16:34,670
+So I don't want to go into detail too much here but we will provide you again with further
+
+165
+00:16:34,670 --> 00:16:44,370
+information on this topic. But it's also easy to understand it from this illustration here.
+
+166
+00:16:44,370 --> 00:16:51,110
+So the idea is again that the camera, the odometry computes the camera pose as we go.
+
+167
+00:16:51,110 --> 00:16:57,670
+But now every now and then, say every 20cm or so, we take a so called key frame. And
+
+168
+00:16:57,670 --> 00:17:05,449
+instead of now always matching our current camera to the previous camera we always localize
+
+169
+00:17:05,449 --> 00:17:12,319
+with respect to our previous key frame. And that removes already a lot of the pose drift
+
+170
+00:17:12,319 --> 00:17:17,949
+that we have seen. But the other extension is that whenever we add a new key frame we
+
+171
+00:17:17,949 --> 00:17:22,650
+actually try to match it with previous key frames. And when we have a successful match
+
+172
+00:17:22,650 --> 00:17:29,620
+then we add one of this green intermediate edges in between. And these edges, you can
+
+173
+00:17:29,620 --> 00:17:37,500
+imagine them as springs that keep our pose graph together, and whenever we add such an
+
+174
+00:17:37,500 --> 00:17:44,610
+intermediate spring you can see how the camera nodes move a little bit to relax. And especially
+
+175
+00:17:44,610 --> 00:17:50,900
+once we're finishing the whole loop here around the table and we are able to do a large loop
+
+176
+00:17:50,900 --> 00:17:59,880
+closer here at the end. You can see that the pose graph really changes a lot one this edges
+
+177
+00:17:59,880 --> 00:18:00,750
+are added.
+
+178
+00:18:00,750 --> 00:18:05,610
+So I switched back here just before the moment when the loop closure happens. Now and you
+
+179
+00:18:05,610 --> 00:18:13,460
+can see that all the camera poses get adapted slightly to undo the drift that we have seen before.
+
+180
+00:18:13,460 --> 00:18:21,590
+And then of course we can render this scene again as a point cloud. And now, this point
+
+181
+00:18:21,590 --> 00:18:28,640
+cloud looks much more consistent. There is no longer this drift that we have seen before
+
+182
+00:18:28,640 --> 00:18:36,750
+with the visual odometry. So now all cameras are consistent to each other and that's a
+
+183
+00:18:36,750 --> 00:18:43,880
+good starting point for mapping. Now one problem of point clouds is that it don't looks so
+
+184
+00:18:43,880 --> 00:18:49,500
+nice, depending of course on your application you would like to have again. A mesh as we
+
+185
+00:18:49,500 --> 00:18:55,370
+have seen before using marching cubes, but one problem here is to run marching cubes
+
+186
+00:18:55,370 --> 00:19:02,350
+we would need to generate a high resolution 3D voxel grid as before. And this voxel grid
+
+187
+00:19:02,350 --> 00:19:10,090
+consumes very much memory because it grows cubically. So in the last video we showed you
+
+188
+00:19:10,090 --> 00:19:15,350
+this reconstruction of the kitchen or our quadrotor lab and the person and for that we generally
+
+189
+00:19:15,350 --> 00:19:22,290
+use a resolution of around 256 to the power of 3 voxels. And then, it fits nicely in memory
+
+190
+00:19:22,290 --> 00:19:28,549
+and you can easily compute it in real time. But one problem is that as soon as you increase
+
+191
+00:19:28,549 --> 00:19:33,650
+this resolution then you memory consumption goes up by a vector of 8. Every time you double
+
+192
+00:19:33,650 --> 00:19:39,890
+the resolution the memory consumption grows by a vector of 8. And this means that it scales
+
+193
+00:19:39,890 --> 00:19:42,870
+very poorly to larger environments.
+
+194
+00:19:42,870 --> 00:19:47,130
+And now the idea that Frank Steinbrücker had to remedy this problem is to actually
+
+195
+00:19:47,130 --> 00:19:52,250
+use an oct-tree as data structure that only stores those cells that are actually close
+
+196
+00:19:52,250 --> 00:19:57,360
+to the surface because we're not interested in all the voxels that are far away from our
+
+197
+00:19:57,360 --> 00:20:02,770
+surface. But we only need in principle to model one voxel in front of the surface and
+
+198
+00:20:02,770 --> 00:20:08,650
+one behind. Of course when you implement that you need to make certain tradeoffs. We allocated
+
+199
+00:20:08,650 --> 00:20:19,280
+a little bit more than that, but nevertheless, the idea that we only store a small band around the actual surface.
+
+200
+00:20:19,280 --> 00:20:23,039
+And then, another cool thing that you can do with oct-trees is to store the geometry
+
+201
+00:20:23,039 --> 00:20:29,780
+not only at the leafs of the oct-tree but store it at the intermediate layers as well.
+
+202
+00:20:29,780 --> 00:20:35,130
+And that then gives you the geometry at multiple resolution. So you have a multi resolution
+
+203
+00:20:35,130 --> 00:20:42,929
+signed distance function then from which we can compute this mesh.
+
+204
+00:20:42,929 --> 00:20:49,429
+And the other cool thing with oct-trees is that we can grow the tree in principle arbitrarily
+
+205
+00:20:49,429 --> 00:20:56,679
+because whenever we leave the construction volume we can just add a new top node, a new root
+
+206
+00:20:56,679 --> 00:21:01,780
+node, and get larger and larger. So in principle there is no fixed size except for memory limits
+
+207
+00:21:01,780 --> 00:21:03,590
+of your host station.
+
+208
+00:21:03,590 --> 00:21:12,270
+And with that Frank took a very long sequence of RGB-D images of over 24.000 images. It
+
+209
+00:21:12,270 --> 00:21:21,410
+took him I think more than half an hour or more an hour in our lab to actually record
+
+210
+00:21:21,410 --> 00:21:26,740
+it. And then, Christian run his visual SLAM algorithm
+
+211
+00:21:26,740 --> 00:21:34,460
+on top of it, so we removed the drift with that automatically. We get good camera poses.
+
+212
+00:21:34,460 --> 00:21:42,660
+And then, after that Frank created this oct-tree signed distance function representation and
+
+213
+00:21:42,660 --> 00:21:47,510
+on top of that we then again run marching cubes to generate this mesh.
+
+214
+00:21:47,510 --> 00:21:51,190
+And as you can see you can really zoom in, you get lots of details on the keyboard, sometimes
+
+215
+00:21:51,190 --> 00:21:57,760
+you can even recognize papers that are lying around, you can see the screen, you can see
+
+216
+00:21:57,760 --> 00:22:03,669
+persons, small details, and at the same time we are dealing with a very large geometry
+
+217
+00:22:03,669 --> 00:22:05,190
+here.
+
+218
+00:22:05,190 --> 00:22:12,500
+So maybe just to give you just a few numbers here: this model now still fits in the memory
+
+219
+00:22:12,500 --> 00:22:21,990
+of a recent GPU, it consumes around 3.4 GB of memory including the oct-tree and the mesh.
+
+220
+00:22:21,990 --> 00:22:26,850
+And then again, you can store the mesh in a file and then use that for architectural
+
+221
+00:22:26,850 --> 00:22:33,830
+purposes or for computer games and so on.
+
+222
+00:22:33,830 --> 00:22:42,100
+And then, we actually found that the mapping on GPU ran extremely fast. Frank obtained
+
+223
+00:22:42,100 --> 00:22:46,309
+frame rates of around 200 frames per second to be integrated in this tree. The reason
+
+224
+00:22:46,309 --> 00:22:53,020
+for that is that we have actually much less voxels that we need to update because we're
+
+225
+00:22:53,020 --> 00:22:59,549
+only updating instead of the whole voxel grid we're only updating locally around the surface. And that
+
+226
+00:22:59,549 --> 00:23:03,660
+means that the whole algorithm runs extremely quickly. And then, we thought you know we
+
+227
+00:23:03,660 --> 00:23:11,600
+don't really need 200Hz so let's try again to bring back this algorithm to CPU.
+
+228
+00:23:11,600 --> 00:23:15,660
+And this is actually what happens frequently, first when you start research on something
+
+229
+00:23:15,660 --> 00:23:21,669
+you need all the strongest PC that you can imagine, the best 3D sensor that you can imagine
+
+230
+00:23:21,669 --> 00:23:27,059
+and then you barely mange to get a nice 3D reconstruction or a nice algorithm running.
+
+231
+00:23:27,059 --> 00:23:30,780
+And then, the more you think about it the more you realize where you can actually tweak
+
+232
+00:23:30,780 --> 00:23:36,419
+the memory consumption. And as a side effect this also tweaks the processing power more
+
+233
+00:23:36,419 --> 00:23:43,460
+that we need. And so Frank reimplemented the whole thing on CPU. He used a lot of tweaks
+
+234
+00:23:43,460 --> 00:23:49,080
+and optimizations he relies on SIMD instructions that allows you to run four instructions at
+
+235
+00:23:49,080 --> 00:23:55,340
+the same time on one single core. And then, he still using two cores now, one for updating
+
+236
+00:23:55,340 --> 00:24:01,110
+the oct-tree and extending the oct-tree and a second CPU core to incrementally generate
+
+237
+00:24:01,110 --> 00:24:05,049
+this mesh that is then displayed in a viewer at the same time.
+
+238
+00:24:05,049 --> 00:24:09,480
+Now in this visualization you can still see this different level of detail. Some of the triangles
+
+239
+00:24:09,480 --> 00:24:15,380
+here come from a very coarse signed distance function at a higher level because the camera
+
+240
+00:24:15,380 --> 00:24:19,660
+was very far away, while other parts where the camera has already passed through get
+
+241
+00:24:19,660 --> 00:24:32,820
+very fine and tiny meshes. So this one goes down to I think at less than 5mm in resolution.
+
+242
+00:24:32,820 --> 00:24:36,299
+And at the same time you get the texture but you don't need it. Sometimes it's better to
+
+243
+00:24:36,299 --> 00:24:43,980
+see how the geometry looks like if you look just at the gray geometry.
+
+244
+00:24:43,980 --> 00:24:48,669
+And then, we also realized after a while, this is now a work from Jakob Engel another
+
+245
+00:24:48,669 --> 00:24:55,090
+PhD student in our lab, that we can transfer this concept back to monocular cameras and
+
+246
+00:24:55,090 --> 00:24:59,669
+with that in principle it becomes applicable to Parrot ArDrones as well, so that's what
+
+247
+00:24:59,669 --> 00:25:07,729
+we want to try next. This video now shows the direct visual odometry
+
+248
+00:25:07,729 --> 00:25:15,570
+with monocular camera. But also Jakob is working at the moment towards a direct SLAM system
+
+249
+00:25:15,570 --> 00:25:22,380
+that again tries to close loops and optimize then the whole pose graph to obtain an even
+
+250
+00:25:22,380 --> 00:25:34,640
+better drift free 3D map. So next to the dense tracking the idea is now that we need and
+
+251
+00:25:34,640 --> 00:25:39,470
+depth image of course from somewhere to be able to do this image warping. And the idea
+
+252
+00:25:39,470 --> 00:25:47,169
+is now that for every pixel that has a non-zero gradient, wherever you see some corner or some edge
+
+253
+00:25:47,169 --> 00:25:52,740
+in the image you can actually try to measure its distance by picking the right frame. The
+
+254
+00:25:52,740 --> 00:26:05,340
+previous camera frame you wish to compare it to. And then, you can update independent Kalman
+
+255
+00:26:05,340 --> 00:26:11,480
+Filters for all the pixels in the image and this gives you then the so called semi-dense
+
+256
+00:26:11,480 --> 00:26:18,970
+depth map here on the left side. And this corresponds in principle to a 3D point cloud
+
+257
+00:26:18,970 --> 00:26:22,770
+as you can see here on the right. And the cool thing with using a monocular
+
+258
+00:26:22,770 --> 00:26:28,240
+camera here is that you actually not limited to indoor, like we are with the Kinect, you
+
+259
+00:26:28,240 --> 00:26:34,580
+can actually also go outdoors. And in contrast to previous methods where you extract key
+
+260
+00:26:34,580 --> 00:26:39,460
+points for example we can also compute the depths of parts of the scene that actually
+
+261
+00:26:39,460 --> 00:26:43,200
+are not a corner but just an edge.
+
+262
+00:26:43,200 --> 00:26:51,289
+And you can see here you get even the depths for the clouds very far away and you get close
+
+263
+00:26:51,289 --> 00:26:57,570
+objects also represented at the same time.
+
+264
+00:26:57,570 --> 00:27:02,020
+So to summarize the lesson of today, we've looked at direct methods for visual odometry
+
+265
+00:27:02,020 --> 00:27:06,000
+and visual SLAM. We've introduced the photo consistency constraint
+
+266
+00:27:06,000 --> 00:27:08,780
+as our main constrain that we used during optimization.
+
+267
+00:27:08,780 --> 00:27:15,100
+We've looked at loop closing for the SLAM problem, the graph SLAM problem. As I said
+
+268
+00:27:15,100 --> 00:27:20,470
+we only touched SLAM briefly but if you're interested in more then please follow the
+
+269
+00:27:20,470 --> 00:27:27,610
+link after this video to learn more. And then, we have also looked at large scale
+
+270
+00:27:27,610 --> 00:27:32,870
+3D reconstruction by using signed distance functions and oct-trees. And the good news
+
+271
+00:27:32,870 --> 00:27:37,840
+here is that actually Christian and Frank decided to make the software completely available
+
+272
+00:27:37,840 --> 00:27:43,350
+as open source. So please visit either our homepage or our Github page download this
+
+273
+00:27:43,350 --> 00:27:46,500
+and run it all by yourself.
+
+274
+00:27:46,500 --> 00:27:51,049
+So this video now concludes our edx course on Autonomous Navigation for Flying Robots.
+
+275
+00:27:51,049 --> 00:27:56,640
+I hope you enjoyed the course a lot it was also fun for us to prepare all of that. I
+
+276
+00:27:56,640 --> 00:28:01,029
+hope we got you interested in this topic in general, I hope you learned something here
+
+277
+00:28:01,029 --> 00:28:08,500
+and there. Maybe some of you have already now transferred some of your insights to a real
+
+278
+00:28:08,500 --> 00:28:14,890
+quadrotors, maybe you have a Parrot ArDrone or one of the Bitcraze Crazyflie quadrotors. And
+
+279
+00:28:14,890 --> 00:28:20,400
+so we're looking forward to see how you liked the course and what things could be improved
+
+280
+00:28:20,400 --> 00:28:26,460
+in future classes. And with that I wish you all a great time. Please drop us a line if
+
+281
+00:28:26,460 --> 23:59:59,999
+you like to send us some feedback. And have fun and take care.
+

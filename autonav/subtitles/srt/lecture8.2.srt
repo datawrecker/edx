@@ -1,0 +1,724 @@
+1
+00:00:00,580 --> 00:00:03,749
+Hello and welcome everybody back to video 8.2.
+
+2
+00:00:03,749 --> 00:00:07,149
+In this video we will introduce signed distance functions.
+
+3
+00:00:07,149 --> 00:00:10,860
+And in particular we will then show an algorithm that uses signed distance functions to track
+
+4
+00:00:10,860 --> 00:00:18,789
+the pose of a quadrotor in real time and create simultaneously a 3D textured map of its surroundings.
+
+5
+00:00:18,789 --> 00:00:22,580
+Before we start with the technical details let me first show you this video. This is an
+
+6
+00:00:22,580 --> 00:00:30,599
+AscTec quadrotor called Pelican and it has a 3D depth camera on board. And it now uses
+
+7
+00:00:30,599 --> 00:00:36,610
+the images of this 3D depth camera to generate a 3D model of its surroundings and at the
+
+8
+00:00:36,610 --> 00:00:43,600
+same time estimates then its position, its 3D pose, in real time and uses that for position
+
+9
+00:00:43,600 --> 00:00:48,050
+control. And in the remainder of this video I will show you how this works and how this
+
+10
+00:00:48,050 --> 00:00:55,610
+can be done. And then this now here is a visualization of the flight trajectory. Actually you can
+
+11
+00:00:55,610 --> 00:01:02,320
+see that it is quit shaky the quadrotor did not follow nicely a certain path. But nevertheless
+
+12
+00:01:02,320 --> 00:01:08,190
+the algorithm is able to run and the quadrotor follows the predefined path.
+
+13
+00:01:08,190 --> 00:01:15,540
+So this is our platform in more detail you can see it's also a quadrotor it has four
+
+14
+00:01:15,540 --> 00:01:23,690
+rotors, it has an autopilot board in the middle that does attitude control and contains the IMU.
+
+15
+00:01:23,690 --> 00:01:29,700
+And then, on top we have mounted an RGB-D camera. The good thing about this Pelican
+
+16
+00:01:29,700 --> 00:01:34,050
+platform is that it can carry up to 600 grams of additional payload. So you can add more
+
+17
+00:01:34,050 --> 00:01:40,300
+sensor as you wish. And we then decided to add a RGB-D camera. It's similar to a Microsoft
+
+18
+00:01:40,300 --> 00:01:47,940
+Kinect just a little bit more lightweight. And it contains a full computer running Ubuntu
+
+19
+00:01:47,940 --> 00:01:54,950
+we have now an Intel Core2Duo, but they also sell it with an i5 so you can get really reasonable performance.
+
+20
+00:01:54,950 --> 00:02:02,500
+And then, in the video you have seen before we've used this on board PC for a Kalman Filtering
+
+21
+00:02:02,500 --> 00:02:08,740
+and the autopilot board for position control. But we still had an external computer that
+
+22
+00:02:08,740 --> 00:02:15,980
+was running the 3D mapping because at the moment we need a graphics card for it.
+
+23
+00:02:15,980 --> 00:02:22,300
+So just to give you a brief outline of what depth cameras are and how the work.
+
+24
+00:02:22,300 --> 00:02:27,620
+This is how this ASUS camera looks like. It consists of two cameras, namely an infrared
+
+25
+00:02:27,620 --> 00:02:34,440
+camera and a color camera. And the infrared camera looks at the scene where it sees the
+
+26
+00:02:34,440 --> 00:02:39,970
+normal infrared image but it also sees a dot pattern that is projected by the sensor itself
+
+27
+00:02:39,970 --> 00:02:45,430
+from a slightly different location. And then, this pair of the infrared pattern projector
+
+28
+00:02:45,430 --> 00:02:51,690
+and the infrared camera forms a so called stereo baseline which gives us the possibility
+
+29
+00:02:51,690 --> 00:02:57,720
+then to compute the depth of every pixel - so the distance of every pixel from the sensor.
+
+30
+00:02:57,720 --> 00:03:04,520
+And there are different sensing principles for generating such depth measurements. Stereo
+
+31
+00:03:04,520 --> 00:03:11,910
+cameras and structured light cameras like this one match two images so either a reference
+
+32
+00:03:11,910 --> 00:03:17,099
+image that you already know from your projector  or you just observe two independent images
+
+33
+00:03:17,099 --> 00:03:22,300
+with a stereo camera and then you try to match them or you have direct measurement principles
+
+34
+00:03:22,300 --> 00:03:27,739
+where you measure the time of flight of a light pulse that you are sending out and the
+
+35
+00:03:27,739 --> 00:03:31,040
+time until it returns.
+
+36
+00:03:31,040 --> 00:03:36,840
+So before we now present our algorithm I thought it would be nice to also present a little
+
+37
+00:03:36,840 --> 00:03:40,780
+bit what happened before. We are using signed distance functions and
+
+38
+00:03:40,780 --> 00:03:45,180
+they have actually been introduced by Curless and Levoy for 3D reconstruction already in
+
+39
+00:03:45,180 --> 00:03:49,720
+1996. The basic idea here is that they represent
+
+40
+00:03:49,720 --> 00:03:54,550
+distance to the surface in a voxel grid. You see later an illustration of what that actually
+
+41
+00:03:54,550 --> 00:03:58,930
+means. And they already run at that time a data fusion
+
+42
+00:03:58,930 --> 00:04:03,750
+of multiple images into a 3D model. But it didn't do camera tracking and of course it
+
+43
+00:04:03,750 --> 00:04:08,040
+was also not running in real time at this time.
+
+44
+00:04:08,040 --> 00:04:15,050
+This changed dramatically with the appearance of Kinect. And then, the first algorithm that showed that
+
+45
+00:04:15,050 --> 00:04:20,389
+you could really do nice 3D reconstruction was KinectFusion, so I really recommend that you
+
+46
+00:04:20,389 --> 00:04:24,710
+google for KinectFusion or follow the link at the video to look at the original KinectFusion
+
+47
+00:04:24,710 --> 00:04:27,539
+video. It was for the first time that people showed
+
+48
+00:04:27,539 --> 00:04:37,059
+you can get really nicely looking 3D reconstructions in real time from the Kinect.
+
+49
+00:04:37,059 --> 00:04:43,259
+So KinectFusion uses ICP to track the camera pose. ICO stand for Iteratively Closest Point
+
+50
+00:04:43,259 --> 00:04:49,620
+and it is a really popular algorithm to align two point clouds. The problem here is of course
+
+51
+00:04:49,620 --> 00:04:54,240
+that we don't have point clouds or we have one point cloud from the sensor but we represent
+
+52
+00:04:54,240 --> 00:05:00,669
+a model using this signed distance function. So KinectFusion emulates a synthetic depth
+
+53
+00:05:00,669 --> 00:05:05,240
+image a synthetic depth cloud, and then, aligns these two using ICP.
+
+54
+00:05:05,240 --> 00:05:10,339
+And then, we said that this is of course not optimal because you need to emulate a depth
+
+55
+00:05:10,339 --> 00:05:15,150
+image. So can't we do that more direct? And then, we came up with the idea to estimate
+
+56
+00:05:15,150 --> 00:05:18,749
+the camera pose directly using the signed distance function and as you will see this
+
+57
+00:05:18,749 --> 00:05:26,669
+is a very efficient way and even more accurate than if you would first have to go via synthetic
+
+58
+00:05:26,669 --> 00:05:28,689
+depth images and then run ICP on that.
+
+59
+00:05:28,689 --> 00:05:32,979
+So now let's look at what signed distance functions actually are. Imagine that we have
+
+60
+00:05:32,979 --> 00:05:39,800
+a house that we want to reconstruct in 3D. And then we could define a function that has
+
+61
+00:05:39,800 --> 00:05:44,979
+the value of 0 exactly at the location of the surface of the house and that has negative
+
+62
+00:05:44,979 --> 00:05:50,460
+values outside of the house and positive values within.
+
+63
+00:05:50,460 --> 00:05:55,279
+And of course we can't represent the continuous function very well in a computer. So we would
+
+64
+00:05:55,279 --> 00:06:02,149
+just sample this function in a grid and this would give us a signed distance grid.
+
+65
+00:06:02,149 --> 00:06:11,749
+And now in this example the blue cells are negative cells outside of the object and the
+
+66
+00:06:11,749 --> 00:06:15,119
+cells with positive distances are within the object.
+
+67
+00:06:15,119 --> 00:06:19,559
+And now the next step of course is that we need to compute this signed distance function
+
+68
+00:06:19,559 --> 00:06:25,379
+from depth images. For the moment we try to compute it for a single depth image. And then,
+
+69
+00:06:25,379 --> 00:06:27,800
+we will extend that later to multiple depth images.
+
+70
+00:06:27,800 --> 00:06:34,110
+So the problem is that we want to estimate the value of all cells of our signed distance
+
+71
+00:06:34,110 --> 00:06:40,139
+function and that means that for every cell we have to estimate its distance to the surface.
+
+72
+00:06:40,139 --> 00:06:44,979
+Computing the euclidean distance is whether involve computationally but a very simple
+
+73
+00:06:44,979 --> 00:06:52,550
+approximation to that is the so called projective distance that you can just evaluate by projecting
+
+74
+00:06:52,550 --> 00:06:58,369
+every cell into the view of the camera, and then, looking up the depth value that you
+
+75
+00:06:58,369 --> 00:07:05,300
+observe at this point. And then, you can take the difference between these two and then
+
+76
+00:07:05,300 --> 00:07:09,479
+have an observed projective distance. This is not exactly the same as the euclidean
+
+77
+00:07:09,479 --> 00:07:14,270
+distance but it is good enough, at least if your opening angle is narrow enough. And this
+
+78
+00:07:14,270 --> 00:07:17,809
+is why we decided to use that.
+
+79
+00:07:17,809 --> 00:07:22,749
+And now the next step of course is that we have multiple depth images, so every voxel
+
+80
+00:07:22,749 --> 00:07:28,229
+is observed multiple times. And now what we do is we compute the weighted
+
+81
+00:07:28,229 --> 00:07:34,439
+average over all measurements. Which means that at every voxel we have to keep the sum
+
+82
+00:07:34,439 --> 00:07:43,949
+or the average distance and the sum of all weights. And then, with every new depth image
+
+83
+00:07:43,949 --> 00:07:47,809
+we can just update this two values. And then, we can do the same actually also
+
+84
+00:07:47,809 --> 00:07:54,009
+for the color. So we can compute the weighted average of every voxel in the color space.
+
+85
+00:07:54,009 --> 00:07:58,319
+And so for now we have assumed that we know the camera poses that's of course not true.
+
+86
+00:07:58,319 --> 00:08:04,509
+When we have a flying quadrotor. But we will look at this in a second. But first let's
+
+87
+00:08:04,509 --> 00:08:09,759
+look at how to actually visualize a signed distance volume.
+
+88
+00:08:09,759 --> 00:08:16,539
+There are different algorithms for actually doing that, KinectFusion used ray casting.
+
+89
+00:08:16,539 --> 00:08:22,839
+But a different method is to extract a mesh from it. A mesh has the advantage later that
+
+90
+00:08:22,839 --> 00:08:28,719
+you can easily import it in other programs like a CAD program for example. And then,
+
+91
+00:08:28,719 --> 00:08:32,130
+you can actually take measurements within your volume.
+
+92
+00:08:32,130 --> 00:08:36,120
+And one very popular algorithm for extracting a mesh from a signed distance function is
+
+93
+00:08:36,120 --> 00:08:42,970
+called marching cubes. And the basic idea behind this is that we need to find the zero
+
+94
+00:08:42,970 --> 00:08:46,710
+crossings in the signed distance function because we know that whenever the sign changes
+
+95
+00:08:46,710 --> 00:08:52,710
+we know that there must be a surface somewhere in between. We're switching from outside the
+
+96
+00:08:52,710 --> 00:08:57,910
+object to inside the object, and then, what marching cubes does is to interpolate distance values
+
+97
+00:08:57,910 --> 00:09:05,860
+of both of these voxels to find exactly the location of the estimated surface. And with
+
+98
+00:09:05,860 --> 00:09:10,900
+that you get a really good resolution that's typically much higher than your voxel grid
+
+99
+00:09:10,900 --> 00:09:17,480
+resolution and so you getting much smoother surfaces. And this works of course in 2D,
+
+100
+00:09:17,480 --> 00:09:22,160
+then it's called marching squares but it also works in 3D, then it is called marching cubes
+
+101
+00:09:22,160 --> 00:09:26,730
+because then you're looking at one cube at the time.
+
+102
+00:09:26,730 --> 00:09:34,810
+From there this gives you then vertices and faces that you can safe to a file for example
+
+103
+00:09:34,810 --> 00:09:41,070
+and your mesh is then represented as a list triangles.
+
+104
+00:09:41,070 --> 00:09:47,740
+Now the next step is that we need to estimate the camera pose and for that we assume that
+
+105
+00:09:47,740 --> 00:09:52,150
+we have already build the signed distance function from the first k frames. So this
+
+106
+00:09:52,150 --> 00:09:57,320
+means in the very beginning we would assume that we know the initial pose of the quadrotor,
+
+107
+00:09:57,320 --> 00:10:02,940
+say it could be located at the origin. And then, with every next frame we continue
+
+108
+00:10:02,940 --> 00:10:07,010
+as follows. So we were initializing then the signed distance function from the first frame
+
+109
+00:10:07,010 --> 00:10:12,570
+or from the first k frames. And then we get a new camera frame for which we don't know
+
+110
+00:10:12,570 --> 00:10:16,570
+the camera pose. Of course you could make a first prediction. Maybe just by assuming
+
+111
+00:10:16,570 --> 00:10:22,260
+that you have a constant velocity. So you're moving in the same direction as before or
+
+112
+00:10:22,260 --> 00:10:27,670
+you just assume zero velocity initializing it with the previous pose.
+
+113
+00:10:27,670 --> 00:10:33,780
+And then, the depth camera gives you a surface in 3D. And now our goal is of course to align
+
+114
+00:10:33,780 --> 00:10:39,500
+the surface to the surface that is stored in our signed distance function. And now KinectFusion
+
+115
+00:10:39,500 --> 00:10:44,460
+actually does this as follows. It simulates the synthetic depth image from your current
+
+116
+00:10:44,460 --> 00:10:51,360
+estimate of the camera pose and then runs ICP between the two to find the right camera
+
+117
+00:10:51,360 --> 00:10:55,060
+pose. And this is actually not necessary because
+
+118
+00:10:55,060 --> 00:11:00,250
+what ICP then in the end is doing is again computing distances of your reference model
+
+119
+00:11:00,250 --> 00:11:05,980
+to your target model. And this is actually not necessary, so we realized then when we
+
+120
+00:11:05,980 --> 00:11:10,700
+were looking at that that you can actually directly use signed distance functions to
+
+121
+00:11:10,700 --> 00:11:18,810
+read out these distances. So if you look very clearly now every part of the green line
+
+122
+00:11:18,810 --> 00:11:25,800
+should coincide with the zero crossing that we have in the signed distance function. And
+
+123
+00:11:25,800 --> 00:11:36,380
+when it is not lying on the zero crossing then our camera pose is not yet correct.
+
+124
+00:11:36,380 --> 00:11:41,620
+So what we try to achieve is make this green line match exactly the black line. And for
+
+125
+00:11:41,620 --> 00:11:48,330
+that we can formulate an energy function as follows. So every pixel on the depth image
+
+126
+00:11:48,330 --> 00:11:57,340
+can be projected into 3D space given a certain rotation and a translation. And that 
+
+127
+00:11:57,340 --> 00:12:04,230
+gives us then a 3D coordinate in the world frame. And for this 3D coordinate we can look up
+
+128
+00:12:04,230 --> 00:12:09,730
+the distance value from our signed distance function. We can then spare it if we assume
+
+129
+00:12:09,730 --> 00:12:17,940
+that the noise is normal distributed or apply any other robust norm. And then, sum these
+
+130
+00:12:17,940 --> 00:12:24,450
+costs over all pixels i and j. And we of course seek to minimize this sum because we know
+
+131
+00:12:24,450 --> 00:12:29,120
+that our minimum should be at the place where this green line coincides with this zero crossing
+
+132
+00:12:29,120 --> 00:12:34,650
+in the signed distance function. And we minimize that using Gauss-Newton method
+
+133
+00:12:34,650 --> 00:12:40,940
+similar to what the KLT tracker has actually been using. And of course when you are optimizing
+
+134
+00:12:40,940 --> 00:12:45,930
+something like this remember that you have a minimum representation, so it makes sense
+
+135
+00:12:45,930 --> 00:12:53,470
+to represent this rotation matrix R here as angular velocities for example, because then
+
+136
+00:12:53,470 --> 00:12:59,880
+you have only three degrees of freedom instead of nine components of a rotation matrix.
+
+137
+00:12:59,880 --> 00:13:06,660
+And then, we can actually use this concept to perform mapping with a quadrotor. So as
+
+138
+00:13:06,660 --> 00:13:12,950
+we said before we equip the quadrotor with a depth camera and then we feed the depth
+
+139
+00:13:12,950 --> 00:13:18,850
+images that we get. We load then on to an external computer just because the on board
+
+140
+00:13:18,850 --> 00:13:25,670
+PC is not strong enough to do that at the moment. And we update the signed distance
+
+141
+00:13:25,670 --> 00:13:30,540
+function, and then, estimate the next camera pose. And then, we feedback this camera pose
+
+142
+00:13:30,540 --> 00:13:35,650
+to position control that then again runs on the quadrotor and that uses it then to follow
+
+143
+00:13:35,650 --> 00:13:39,060
+a trajectory. And then, actually only as a side product
+
+144
+00:13:39,060 --> 00:13:43,860
+we obtain this 3D model from the signed distance function even with color that we can then
+
+145
+00:13:43,860 --> 00:13:49,190
+use or that an architect could use to show how a room looks like.
+
+146
+00:13:49,190 --> 00:13:56,370
+And just to give you a few more examples, these are some of our lab spaces here in Munich.
+
+147
+00:13:56,370 --> 00:14:03,050
+So we flew a small rectangular shape with the quadrotor in one of the labs. And this
+
+148
+00:14:03,050 --> 00:14:09,180
+gives us then this 3D model of the world. You can recognize some of the desks, but
+
+149
+00:14:09,180 --> 00:14:13,590
+the important thing here is that this automatically has the right scale because the Kinect sensor
+
+150
+00:14:13,590 --> 00:14:18,580
+has a fixed baseline and so we know about the scale of the world. And so an architect
+
+151
+00:14:18,580 --> 00:14:24,680
+could directly measure the height of a table or the distance between walls.
+
+152
+00:14:24,680 --> 00:14:30,190
+This is another corner that we have in our lab with two sofas so if you are ever close
+
+153
+00:14:30,190 --> 00:14:35,640
+to Munich then please visit us and then you can see these sofas and the lab for real.
+
+154
+00:14:35,640 --> 00:14:40,130
+And an interesting thing then is that you can actually not only use that for 3D room
+
+155
+00:14:40,130 --> 00:14:45,500
+scanning with a quadrotor and position control but for an algorithm itself it does not matter
+
+156
+00:14:45,500 --> 00:14:51,480
+whether you scanning a room or you actually scanning an object or a person. And so we
+
+157
+00:14:51,480 --> 00:14:58,790
+figured that we can actually use that to scan persons in 3D. In this case we put the person
+
+158
+00:14:58,790 --> 00:15:04,610
+an a swivel chair that we rotated slowly and you can see in the upper left corner there
+
+159
+00:15:04,610 --> 00:15:13,340
+is the action light sensor and on the screen you get immediately a model of the person.
+
+160
+00:15:13,340 --> 00:15:18,520
+This part of the video shows now a little bit more detail. You can see how the 3Dmodel
+
+161
+00:15:18,520 --> 00:15:25,230
+is curved out while the camera is apparent is virtually moving around the object of course
+
+162
+00:15:25,230 --> 00:15:31,440
+not for real - the object rotates - but for the algorithm it doesn't matter whether the
+
+163
+00:15:31,440 --> 00:15:35,020
+camera moves or the world moves.
+
+164
+00:15:35,020 --> 00:15:41,180
+And then, the cool thing is this is the visualization of the underlying voxel grid. The cool thing
+
+165
+00:15:41,180 --> 00:15:46,279
+then is that you can also modify this signed distance functions very easily. You can add
+
+166
+00:15:46,279 --> 00:15:51,560
+components like this socket for example and you can make a model hollow on the inside.
+
+167
+00:15:51,560 --> 00:15:55,370
+And there is a good reason why you want to do that because the interesting thing is that you
+
+168
+00:15:55,370 --> 00:16:01,630
+can actually print these models then in 3D and in color. And that gives very nice figures
+
+169
+00:16:01,630 --> 00:16:10,870
+that you can then put in a book shelf or give to your parents as a present. So this is a
+
+170
+00:16:10,870 --> 00:16:17,180
+very simple technique to make 3D scans of objects. It can be a person but it can also
+
+171
+00:16:17,180 --> 00:16:19,070
+be a room.
+
+172
+00:16:19,070 --> 00:16:25,060
+And for this particular object we even launched a website called fablitec.com and if you're
+
+173
+00:16:25,060 --> 00:16:31,120
+interested to try this out for yourself then please navigate there and download a demo version.
+
+174
+00:16:31,120 --> 00:16:37,589
+To sum this up, today we have looked at depth cameras in combination with quadrotors. We've
+
+175
+00:16:37,589 --> 00:16:43,779
+introduced signed distance functions that are very powerful representations for 3D space when
+
+176
+00:16:43,779 --> 00:16:49,470
+you're dealing with depth cameras. We've look at methods to track the camera pose with respect
+
+177
+00:16:49,470 --> 00:16:55,790
+to a signed distance functions. And we have shown that we can actually use that for position
+
+178
+00:16:55,790 --> 00:16:59,470
+control of the quadrotor. And just as a side product here this gives
+
+179
+00:16:59,470 --> 00:17:07,689
+us, as I said, with marching cubes a mesh  that we can then pose process either by loading it into a CAD
+
+180
+00:17:07,689 --> 00:17:12,980
+program or to take measures of a building or to use it for person scanning and then
+
+181
+00:17:12,980 --> 23:59:59,999
+for person printing.
+

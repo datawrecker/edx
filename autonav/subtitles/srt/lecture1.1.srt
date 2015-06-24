@@ -1,0 +1,549 @@
+1
+00:00:00,000 --> 00:00:01,815
+
+2
+00:00:01,815 --> 00:00:03,940
+Hello, and welcome, everybody, to the first lecture
+
+3
+00:00:03,940 --> 00:00:06,870
+on Autonomous Navigation for Flying Robots.
+
+4
+00:00:06,870 --> 00:00:10,187
+My name is Jurgen Sturm, and I'm a post-doctoral researcher
+
+5
+00:00:10,187 --> 00:00:12,520
+in the Computer Vision Group at the Technical University
+
+6
+00:00:12,520 --> 00:00:13,930
+of Munich.
+
+7
+00:00:13,930 --> 00:00:16,920
+This course is about quadrotors, and I guess that most of you
+
+8
+00:00:16,920 --> 00:00:19,250
+will already have seen a quadrotor in action.
+
+9
+00:00:19,250 --> 00:00:21,415
+Maybe some of you even own a quadrotor,
+
+10
+00:00:21,415 --> 00:00:24,260
+or have flown one yourself.
+
+11
+00:00:24,260 --> 00:00:26,400
+This one here is a very popular platform.
+
+12
+00:00:26,400 --> 00:00:28,370
+It's called the Parrot AR.Drone.
+
+13
+00:00:28,370 --> 00:00:31,520
+It was originally meant to be a children's toy,
+
+14
+00:00:31,520 --> 00:00:35,780
+but it turned out that this is a versatile platform also
+
+15
+00:00:35,780 --> 00:00:39,810
+for quadrotor research and teaching with quadrotors.
+
+16
+00:00:39,810 --> 00:00:43,890
+To pilot it around, originally, the idea
+
+17
+00:00:43,890 --> 00:00:46,720
+was to connect to it with a smartphone,
+
+18
+00:00:46,720 --> 00:00:50,660
+and then the quadrotor will copy the motions of the phone.
+
+19
+00:00:50,660 --> 00:00:53,010
+So if you tilt your phone forward, it will move forward.
+
+20
+00:00:53,010 --> 00:00:55,480
+If you tilt it backwards, it will tilt backwards,
+
+21
+00:00:55,480 --> 00:00:58,270
+and then also fly backwards.
+
+22
+00:00:58,270 --> 00:01:00,840
+Same for left and right.
+
+23
+00:01:00,840 --> 00:01:02,635
+The thing that makes it so cool for us
+
+24
+00:01:02,635 --> 00:01:04,959
+is that it has a whole bunch of integrated sensors,
+
+25
+00:01:04,959 --> 00:01:08,280
+and that it transmits all of the sensor data
+
+26
+00:01:08,280 --> 00:01:12,040
+back over wireless, so that we can use it, then,
+
+27
+00:01:12,040 --> 00:01:13,550
+on the computer.
+
+28
+00:01:13,550 --> 00:01:17,600
+For example, it contains accelerometers and gyroscopes
+
+29
+00:01:17,600 --> 00:01:19,960
+that it uses to estimate its attitude,
+
+30
+00:01:19,960 --> 00:01:22,480
+and to keep the quadrotor leveled.
+
+31
+00:01:22,480 --> 00:01:25,850
+It also has an ultrasound sensor to measure the distance
+
+32
+00:01:25,850 --> 00:01:29,190
+to the floor, and then to keep the flying
+
+33
+00:01:29,190 --> 00:01:31,070
+height of the quadrotor constant.
+
+34
+00:01:31,070 --> 00:01:34,290
+It also has a visual odometry sensor
+
+35
+00:01:34,290 --> 00:01:37,330
+that estimates the horizontal speed
+
+36
+00:01:37,330 --> 00:01:39,040
+of the quadrocoptor that's, for example,
+
+37
+00:01:39,040 --> 00:01:44,510
+important during hovering, or during flying in general.
+
+38
+00:01:44,510 --> 00:01:47,930
+And it also has a forward camera,
+
+39
+00:01:47,930 --> 00:01:49,900
+at a higher resolution, that you can
+
+40
+00:01:49,900 --> 00:01:54,500
+use to shoot images or shoot nice aerial videos.
+
+41
+00:01:54,500 --> 00:01:58,650
+And with that, you can, for example, fly around your house,
+
+42
+00:01:58,650 --> 00:02:03,190
+look around a corner, or, if you fly high above your house,
+
+43
+00:02:03,190 --> 00:02:07,920
+you can record nice aerial videos of it.
+
+44
+00:02:07,920 --> 00:02:11,290
+And as nice as it is to pilot a quadrocoptor by yourself,
+
+45
+00:02:11,290 --> 00:02:14,300
+the question that comes immediately into your mind,
+
+46
+00:02:14,300 --> 00:02:18,750
+as a computer scientist, is, how can you actually make
+
+47
+00:02:18,750 --> 00:02:21,460
+this quadrotor fly autonomously?
+
+48
+00:02:21,460 --> 00:02:23,640
+And this is actually the main goal of this course,
+
+49
+00:02:23,640 --> 00:02:27,700
+to teach you how to program the quadrocoptor so
+
+50
+00:02:27,700 --> 00:02:30,640
+that it becomes autonomous.
+
+51
+00:02:30,640 --> 00:02:33,330
+And that involves, of course, all kinds of topics.
+
+52
+00:02:33,330 --> 00:02:37,270
+For example, we have to estimate the internal state
+
+53
+00:02:37,270 --> 00:02:40,870
+of the quadrotor from its sensor readings.
+
+54
+00:02:40,870 --> 00:02:43,270
+That means you need to know its attitude,
+
+55
+00:02:43,270 --> 00:02:45,310
+but we also want to know its position.
+
+56
+00:02:45,310 --> 00:02:48,260
+And we estimate that from GPS
+
+57
+00:02:48,260 --> 00:02:52,750
+noisy GPS readings, for example, or images
+
+58
+00:02:52,750 --> 00:02:55,170
+that we're getting from the quadrotor.
+
+59
+00:02:55,170 --> 00:02:57,700
+And once you have the state, the next question, then,
+
+60
+00:02:57,700 --> 00:03:00,490
+is how can we generate suitable control commands
+
+61
+00:03:00,490 --> 00:03:06,310
+to make quadrocoptor fly towards the desired goal position?
+
+62
+00:03:06,310 --> 00:03:09,710
+And then as a tool to generate a whole path,
+
+63
+00:03:09,710 --> 00:03:14,420
+collision-free path, that takes the quadrotor from A to B.
+
+64
+00:03:14,420 --> 00:03:16,370
+So this is the course content, by week.
+
+65
+00:03:16,370 --> 00:03:18,360
+This week, we start with an introduction,
+
+66
+00:03:18,360 --> 00:03:21,850
+showing why a quadrotor flies, what the flight principle
+
+67
+00:03:21,850 --> 00:03:24,000
+is, what sensors it typically carries on.
+
+68
+00:03:24,000 --> 00:03:27,240
+And then we will briefly review current state-of-the-art
+
+69
+00:03:27,240 --> 00:03:29,982
+methods in quadrotor research.
+
+70
+00:03:29,982 --> 00:03:31,690
+So with that, you will get a good feeling
+
+71
+00:03:31,690 --> 00:03:35,550
+for what's currently out there, and what the open problems are.
+
+72
+00:03:35,550 --> 00:03:37,300
+Then, in the second week, we will
+
+73
+00:03:37,300 --> 00:03:39,720
+give you a brief recap on linear algebra,
+
+74
+00:03:39,720 --> 00:03:42,260
+and look, in particular, then, at 2-D geometry
+
+75
+00:03:42,260 --> 00:03:45,140
+and coordinate transference between different coordinate
+
+76
+00:03:45,140 --> 00:03:46,500
+systems.
+
+77
+00:03:46,500 --> 00:03:49,691
+In the third week, we will then extend this to 3-D geometry.
+
+78
+00:03:49,691 --> 00:03:51,440
+In particular, we will look at projections
+
+79
+00:03:51,440 --> 00:03:54,080
+of cameras using the pinhole model.
+
+80
+00:03:54,080 --> 00:03:56,420
+And we will introduce the mathematical models
+
+81
+00:03:56,420 --> 00:03:58,870
+for all kinds of sensors that are typically
+
+82
+00:03:58,870 --> 00:04:00,750
+employed on a quadrotor.
+
+83
+00:04:00,750 --> 00:04:03,220
+In the fourth week, we will then look
+
+84
+00:04:03,220 --> 00:04:06,181
+at motors, and motor controls, in particular.
+
+85
+00:04:06,181 --> 00:04:07,930
+And this will then give us the possibility
+
+86
+00:04:07,930 --> 00:04:12,220
+to steer the quadrotor in simulation
+
+87
+00:04:12,220 --> 00:04:15,830
+towards the desired goal location.
+
+88
+00:04:15,830 --> 00:04:19,264
+In week five, we then introduce probabilistic state estimation.
+
+89
+00:04:19,264 --> 00:04:22,500
+We will do that, first, by giving a brief recap
+
+90
+00:04:22,500 --> 00:04:24,100
+on probability theory.
+
+91
+00:04:24,100 --> 00:04:26,430
+And then we look at Bayes' law, and how
+
+92
+00:04:26,430 --> 00:04:28,890
+that can be used to infer the growth state.
+
+93
+00:04:28,890 --> 00:04:33,530
+In week six, we extend this, then, to the so-called filters,
+
+94
+00:04:33,530 --> 00:04:36,800
+like Bayes' filter, but, of course, also the Kalman filter.
+
+95
+00:04:36,800 --> 00:04:38,814
+And then in the exercises, you will
+
+96
+00:04:38,814 --> 00:04:41,230
+implement parts of a Kalman filter-- of an extended Kalman
+
+97
+00:04:41,230 --> 00:04:44,650
+filter-- to track the position of a quadrotor, given a GPS
+
+98
+00:04:44,650 --> 00:04:45,707
+signal.
+
+99
+00:04:45,707 --> 00:04:47,290
+Then, in week seven, we will introduce
+
+100
+00:04:47,290 --> 00:04:48,706
+so-called visual odometry sensors,
+
+101
+00:04:48,706 --> 00:04:52,680
+and we will look in more detail how these sensors work,
+
+102
+00:04:52,680 --> 00:04:54,280
+and what the underlying algorithms are
+
+103
+00:04:54,280 --> 00:04:56,155
+for computing visual odometry quickly.
+
+104
+00:04:56,155 --> 00:04:58,382
+And I'm really looking then forward to week eight,
+
+105
+00:04:58,382 --> 00:05:00,840
+where we will present you some really cutting edge research
+
+106
+00:05:00,840 --> 00:05:04,710
+results from our group here-- just to show you
+
+107
+00:05:04,710 --> 00:05:06,130
+what we are currently working on--
+
+108
+00:05:06,130 --> 00:05:09,530
+and present some of the really new approaches
+
+109
+00:05:09,530 --> 00:05:13,480
+that we've been publishing over the past years.
+
+110
+00:05:13,480 --> 00:05:17,200
+This course, as I said, consists of eight weeks.
+
+111
+00:05:17,200 --> 00:05:19,020
+Every week, there will be video lectures,
+
+112
+00:05:19,020 --> 00:05:23,200
+roughly between 30 and 45 minutes long.
+
+113
+00:05:23,200 --> 00:05:26,400
+These videos will be interleaved by interactive exercises.
+
+114
+00:05:26,400 --> 00:05:29,160
+
+115
+00:05:29,160 --> 00:05:32,770
+Partially, this will be interactive quizzes
+
+116
+00:05:32,770 --> 00:05:35,810
+where you have to type in the solution,
+
+117
+00:05:35,810 --> 00:05:37,950
+and also arithmetic problems, where
+
+118
+00:05:37,950 --> 00:05:40,465
+you have to do some calculations on paper.
+
+119
+00:05:40,465 --> 00:05:42,090
+But actually, the most interesting part
+
+120
+00:05:42,090 --> 00:05:45,245
+are the hands-on programming exercises
+
+121
+00:05:45,245 --> 00:05:47,895
+that you will have to do in Python.
+
+122
+00:05:47,895 --> 00:05:52,480
+We have developed a web-based simulator for a quadrotor,
+
+123
+00:05:52,480 --> 00:05:54,150
+and this means that you can immediately
+
+124
+00:05:54,150 --> 00:05:56,410
+try out all your skills that you have learned
+
+125
+00:05:56,410 --> 00:05:59,890
+during this course on a simulated quadrotor.
+
+126
+00:05:59,890 --> 00:06:03,170
+And we took special care that actually the code
+
+127
+00:06:03,170 --> 00:06:05,375
+that you will be writing will be also executable
+
+128
+00:06:05,375 --> 00:06:06,250
+on a Parrot AR.Drone.
+
+129
+00:06:06,250 --> 00:06:08,850
+So if you happen to happen a Parrot AR.Drone,
+
+130
+00:06:08,850 --> 00:06:13,260
+you can try out the solutions to the exercises
+
+131
+00:06:13,260 --> 00:06:15,670
+directly on the real thing.
+
+132
+00:06:15,670 --> 00:06:17,540
+This was now the first video.
+
+133
+00:06:17,540 --> 00:06:19,490
+In the next video, I will introduce
+
+134
+00:06:19,490 --> 00:06:21,341
+why quadrotors are so cool.
+
+135
+00:06:21,341 --> 00:06:22,840
+And what the potential applications,
+
+136
+00:06:22,840 --> 00:06:25,840
+also commercially relevant applications of quadrotors,
+
+137
+00:06:25,840 --> 00:06:28,170
+might be in the future.
+
+138
+00:06:28,170 --> 23:59:59,999
+

@@ -1,0 +1,968 @@
+1
+00:00:00,799 --> 00:00:04,210
+Hello and welcome everybody back to lecture video 5.3.
+
+2
+00:00:04,210 --> 00:00:11,460
+In this video we will introduce Bayes law and then explain how we can use it to infer
+
+3
+00:00:11,460 --> 00:00:15,570
+the world state from the available data.
+
+4
+00:00:15,570 --> 00:00:20,710
+And in terms of data we actually have two sources that we would like to use to infer
+
+5
+00:00:20,710 --> 00:00:24,160
+the world state, namely first we have sensor measurements
+
+6
+00:00:24,160 --> 00:00:27,119
+that we denote with z and those sensor measurements
+
+7
+00:00:27,119 --> 00:00:32,570
+can for example be GPS observation of our position in the 3D world.
+
+8
+00:00:32,570 --> 00:00:40,550
+But we also have knowledge about our controls that we have send to the motors. And those
+
+9
+00:00:40,550 --> 00:00:43,960
+will be denoted by u.
+
+10
+00:00:43,960 --> 00:00:54,000
+And then, of course we need to model the relationship between these senor measurements and our world state.
+
+11
+00:00:54,000 --> 00:00:55,980
+And for that we already introduced the sensor
+
+12
+00:00:55,980 --> 00:01:02,480
+model that describes the probability between x and z.
+
+13
+00:01:02,480 --> 00:01:08,940
+And our motion model that describes the relationship between our previous world state, the motion
+
+14
+00:01:08,940 --> 00:01:16,170
+command that we issued and our new world state.
+
+15
+00:01:16,170 --> 00:01:22,320
+And now it's important to look closely in which direction we are actually reasoning.
+
+16
+00:01:22,320 --> 00:01:30,130
+If we go from the sensor readings to the world state, so we make observations from the sensor
+
+17
+00:01:30,130 --> 00:01:36,560
+and use that to infer the world state, then this is called diagnostic reasoning.
+
+18
+00:01:36,560 --> 00:01:41,750
+If we however go from the world state, if we assume that we know the world state and
+
+19
+00:01:41,750 --> 00:01:47,360
+try to infer what sensor readings are likely then this is called causal reasoning.
+
+20
+00:01:47,360 --> 00:01:53,200
+Typically, at least in our situation we are interested in diagnostic reasoning. We would
+
+21
+00:01:53,200 --> 00:01:59,500
+like to know where the robot is in the world, given that we make certain GPS or odometry
+
+22
+00:01:59,500 --> 00:02:01,170
+observations.
+
+23
+00:02:01,170 --> 00:02:10,330
+But the problem is that diagnostic models are typically very hard to specify and in
+
+24
+00:02:10,330 --> 00:02:15,310
+contrast causal models are much easier to construct.
+
+25
+00:02:15,310 --> 00:02:20,030
+Because in this way, for a causal probability distribution you can just go from the world
+
+26
+00:02:20,030 --> 00:02:27,640
+state and then make predictions on what the senor is likely to report.
+
+27
+00:02:27,640 --> 00:02:35,870
+And with Bayes rule that we will introduce on the next slides we can use a causal model
+
+28
+00:02:35,870 --> 00:02:40,940
+that's much easier to construct to actually do diagnostic inference.
+
+29
+00:02:40,940 --> 00:02:46,220
+So Bayes rule directly follows from the definition of the conditional probability, remember from
+
+30
+00:02:46,220 --> 00:02:54,730
+the previous video that we can write the joint probability as the product of the conditional
+
+31
+00:02:54,730 --> 00:02:57,510
+probability times the prior.
+
+32
+00:02:57,510 --> 00:03:07,770
+So for example, we can factorize the probability P(x,z) into the conditional probability P(x|z)P(z)
+
+33
+00:03:07,770 --> 00:03:16,000
+and that, of course, because we can reverse the variables equals also the probability P(z|x)P(x).
+
+34
+00:03:16,000 --> 00:03:21,950
+And if we reshuffle these terms then we directly obtain Bayes rule. So there is no magic behind
+
+35
+00:03:21,950 --> 00:03:26,020
+Bayes rule, it's just the definition of conditional probability.
+
+36
+00:03:26,020 --> 00:03:32,420
+And it says then that the probability of x of our world state given z our sensor reading, P(x|z),
+
+37
+00:03:32,420 --> 00:03:42,720
+can be obtained by taking the probaility of P(z|x) which is our causul model, which is easy to compute,
+
+38
+00:03:42,720 --> 00:03:49,480
+times the probability  P(x) divided by the probability P(z).
+
+39
+00:03:49,480 --> 00:03:56,170
+Let's look a little bit closer at those terms and how difficult they are to obtain.
+
+40
+00:03:56,170 --> 00:04:04,319
+As we have said, this causal model P(z|x) is typically easy to construct for a given sensor.
+
+41
+00:04:04,319 --> 00:04:09,800
+P(x) encodes the prior on the world state,
+
+42
+00:04:09,800 --> 00:04:13,980
+so how likely is it that we are in a certain state? That is typically either known from
+
+43
+00:04:13,980 --> 00:04:21,930
+the previous time step or you just assume a certain prior depending on your application.
+
+44
+00:04:21,930 --> 00:04:29,960
+But then, you have a denominator the prior on sensor observations. And that's typically
+
+45
+00:04:29,960 --> 00:04:36,529
+very hard to specify, this term generally says how likely it is to make a certain sensor
+
+46
+00:04:36,529 --> 00:04:43,419
+measurement. And depending on your sensor this is might be unknown. So it is unclear
+
+47
+00:04:43,419 --> 00:04:48,740
+how often you actually see a white pixel for a camera or how often you make
+
+48
+00:04:48,740 --> 00:04:54,860
+a certain distance measurement with an ultrasound sensor. That pretty much also depends on you
+
+49
+00:04:54,860 --> 00:05:01,159
+environment around you, and so it's a bit complicated to find this term.
+
+50
+00:05:01,159 --> 00:05:07,309
+But there is a nice trick actually to get around this. And now, the idea is that we
+
+51
+00:05:07,309 --> 00:05:15,009
+just ignore that for a second. We first compute unnormalized likelihoods that do not necessarily
+
+52
+00:05:15,009 --> 00:05:22,069
+sum to 1. So we compute the likelihood of x given z, L(x|z), just without the denominator.
+
+53
+00:05:22,069 --> 00:05:29,520
+And then in a second step we sum all likelihoods and we know that to turn this distribution L into
+
+54
+00:05:29,520 --> 00:05:37,669
+a proper distribution it has to sum to 1. So we can just divide through the sum overall
+
+55
+00:05:37,669 --> 00:05:40,439
+likelihoods in step 3 then.
+
+56
+00:05:40,439 --> 00:05:49,229
+And this gives us a proper probability distribution of P(x|z).
+
+57
+00:05:49,229 --> 00:05:56,699
+And the same derivation actually for the Bayes rule that we had before also works in the
+
+58
+00:05:56,699 --> 00:05:58,490
+presents of background knowledge.
+
+59
+00:05:58,490 --> 00:06:05,559
+So, if we now assume that we have a certain background knowledge set. Then we can still do the same
+
+60
+00:06:05,559 --> 00:06:12,300
+separation for x and y as before. And that gives us then the Bayes rule with background knowledge.
+
+61
+00:06:12,300 --> 00:06:18,770
+So the only change here is that we always have our variables x and y conditioned additionally on
+
+62
+00:06:18,770 --> 00:06:23,830
+a variable z, which just stays on the right side in all of the expressions.
+
+63
+00:06:23,830 --> 00:06:26,749
+And we will need that in a view slides.
+
+64
+00:06:26,749 --> 00:06:32,509
+So because all of this was quite theoretic so far I thought that we should first look
+
+65
+00:06:32,509 --> 00:06:38,029
+at a simple example to clarify maybe a few things to show you how Bayes rule can be applied
+
+66
+00:06:38,029 --> 00:06:39,650
+in practice.
+
+67
+00:06:39,650 --> 00:06:45,550
+So imagine that we having a quadrotor that is seeking its landing zone. And lets further
+
+68
+00:06:45,550 --> 00:06:51,029
+more assume that this landing zone has been marked with many bright lamps, and furthermore,
+
+69
+00:06:51,029 --> 00:06:57,789
+that the quadrotor has a brightness sensor onboard to detect actually these lamps.
+
+70
+00:06:57,789 --> 00:07:01,559
+For that it might have a special purpose brightness sensor of course, but you can in principle
+
+71
+00:07:01,559 --> 00:07:08,599
+also treat a camera as a sophisticated brightness sensor, just by summing over all pixel intensities.
+
+72
+00:07:08,599 --> 00:07:15,069
+Now the problem in this example, or the reason why this is actually interesting is that there
+
+73
+00:07:15,069 --> 00:07:21,689
+are not only lamps at the landing site, but there are also some other lamps distributed
+
+74
+00:07:21,689 --> 00:07:27,099
+around in the environment. So the robot cannot be 100% sure that when
+
+75
+00:07:27,099 --> 00:07:33,339
+it sees a lamp or when the brightness sensor triggers that it is actually above the landing site.
+
+76
+00:07:33,339 --> 00:07:41,169
+So to formalize this problem now a little bit, assume that we have a binary sensor that
+
+77
+00:07:41,169 --> 00:07:48,809
+gives us a reading either of that it detected brightness bellow it or nor.
+
+78
+00:07:48,809 --> 00:07:54,559
+And furthermore, our world state is also quite simple, we are only interested in this binary
+
+79
+00:07:54,559 --> 00:08:01,099
+variable x. Whether we are at home above the landing site or we are not.
+
+80
+00:08:01,099 --> 00:08:07,659
+And now we can specify a sensor model where we specify the probability of detecting brightness
+
+81
+00:08:07,659 --> 00:08:12,659
+when we are above the landing site. And for that we could for example determine
+
+82
+00:08:12,659 --> 00:08:17,060
+experimentally that the brightness sensor triggers above the landing site at a
+
+83
+00:08:17,060 --> 00:08:25,349
+probability of 60%. And by flying around at other places we might furthermore measure
+
+84
+00:08:25,349 --> 00:08:33,948
+that the brightness sensor also occasionally detects brightness when we are not above the landing site.
+
+85
+00:08:33,948 --> 00:08:38,480
+And this value could be specified to 30%.
+
+86
+00:08:38,480 --> 00:08:44,670
+And as you can see, if you build up a sensor model like this, this is now a causal sensor model
+
+87
+00:08:44,670 --> 00:08:51,040
+because being at home or being above the landing site causes the sensor to trigger or not to trigger,
+
+88
+00:08:51,040 --> 00:08:57,310
+is quite easy to construct or to measure also empirically, we could just fly with the robot or hold
+
+89
+00:08:57,310 --> 00:09:03,660
+the quadrotor above the landing site, and then measure how often it actually detects
+
+90
+00:09:03,660 --> 00:09:05,110
+the brightness.
+
+91
+00:09:05,110 --> 00:09:11,660
+Furthermore, we need to define a prior on our world state, if we don't have any preference,
+
+92
+00:09:11,660 --> 00:09:17,600
+if we are 50-50, so to speak, whether we are above the landing zone or not we could set
+
+93
+00:09:17,600 --> 00:09:20,319
+this probability to 0.5.
+
+94
+00:09:20,319 --> 00:09:26,680
+And now, let's furthermore assume that the robot actually observes light, so z equals bright.
+
+95
+00:09:26,680 --> 00:09:29,790
+And now, we would like to know what the probability
+
+96
+00:09:29,790 --> 00:09:36,790
+is, given the sensor model and our prior that we are actually above the landing site given
+
+97
+00:09:36,790 --> 00:09:39,910
+given that the brightness sensor has triggered.
+
+98
+00:09:39,910 --> 00:09:46,410
+And as you can see from the simple example already, it's not straight forward to tell
+
+99
+00:09:46,410 --> 00:09:54,050
+the result because the sensor model goes in the wrong direction. And now, we need this diagnostic
+
+100
+00:09:54,050 --> 00:10:00,970
+reasoning to determine the world state from our sensor readings.
+
+101
+00:10:00,970 --> 00:10:11,680
+But fortunately, of course we are aware of Bayes rule, so we can use Bayes rule now to reverse our
+
+102
+00:10:11,680 --> 00:10:18,240
+causal knowledge, just by filling in now the variable names
+
+103
+00:10:18,240 --> 00:10:24,399
+in Bayes rule we obtain the equation in the middle. And now the only thing that is new
+
+104
+00:10:24,399 --> 00:10:35,860
+is actually the denominator, where we already filled in the normalization constant which always can be
+
+105
+00:10:35,860 --> 00:10:44,490
+computed just by summing up over all possible values of our world state.
+
+106
+00:10:44,490 --> 00:10:51,110
+And if we then fill in the values and compare it. We find that after making this observation
+
+107
+00:10:51,110 --> 00:10:56,620
+that light was detected bellow the quadrotor,
+
+108
+00:10:56,620 --> 00:11:05,199
+then the probability of being above the landing spot increases from 0.5 to 0.67 which is considerably
+
+109
+00:11:05,199 --> 00:11:14,209
+higher but it might not be confident enough to actually trigger a landing behavior.
+
+110
+00:11:14,209 --> 00:11:22,740
+So now let's suppose that our robot obtains another observation just to verify or to consolidate
+
+111
+00:11:22,740 --> 00:11:26,959
+its hypothesis that it is might be above the landing spot.
+
+112
+00:11:26,959 --> 00:11:32,190
+And this second observation could now come from the same sensor, just taken a view seconds
+
+113
+00:11:32,190 --> 00:11:35,569
+later or it could come from a completely different sensor.
+
+114
+00:11:35,569 --> 00:11:42,970
+And then, the question is: how can we integrate this new information in our probability estimate
+
+115
+00:11:42,970 --> 00:11:45,620
+or in our estimate of the world state?
+
+116
+00:11:45,620 --> 00:11:50,540
+So more generally, how can we actually estimate the probability in which world state we are,
+
+117
+00:11:50,540 --> 00:11:59,110
+given that we made a sequence of observations z_1 to z_n with our sensors?
+
+118
+00:11:59,110 --> 00:12:03,819
+And for that we can now use Bayes formula with background knowledge that we've seen
+
+119
+00:12:03,819 --> 00:12:12,740
+in the previous video. Remember that when we want to apply Bayes rule in a setting where
+
+120
+00:12:12,740 --> 00:12:20,180
+we have background knowledge, then we can just keep this background knowledge always
+
+121
+00:12:20,180 --> 00:12:23,600
+on the right side of the bar.
+
+122
+00:12:23,600 --> 00:12:33,459
+So when we apply this Bayes rule now with background knowledge we obtain this relatively large
+
+123
+00:12:33,459 --> 00:12:40,199
+term in the upper right. And now let's first look at the data likelihood
+
+124
+00:12:40,199 --> 00:12:45,589
+that we would now have to evaluate. So this says that we need the likelihood of making
+
+125
+00:12:45,589 --> 00:12:52,600
+a sensor observation z_n given the world state and the values of all our other sensors.
+
+126
+00:12:52,600 --> 00:12:57,569
+And this probability or this likelihood might not be easy to construct because for that
+
+127
+00:12:57,569 --> 00:13:02,209
+we would have to know how all the individual  sensors interact with each other. And how
+
+128
+00:13:02,209 --> 00:13:06,470
+they interact with the world state and that is not easy to specify.
+
+129
+00:13:06,470 --> 00:13:12,670
+But we can make a reasonable assumption here, which is the so called Markov assumption.
+
+130
+00:13:12,670 --> 00:13:19,350
+And the Markov assumption says that the sensor measurement at time step n is independent
+
+131
+00:13:19,350 --> 00:13:26,279
+of all previous sensor measurements as long as we know the world state x.
+
+132
+00:13:26,279 --> 00:13:30,980
+So it doesn't matter at all what all the other sensors measure as long we know what the world
+
+133
+00:13:30,980 --> 00:13:38,529
+state is. We can make a prediction using the sensor model what our sensor will tell us.
+
+134
+00:13:38,529 --> 00:13:44,600
+And this now simplifies a little bit the expression from above.
+
+135
+00:13:44,600 --> 00:13:52,689
+We can strip of this whole dependency on z_1 to z_(n-1) by applying the Markov assumption,
+
+136
+00:13:52,689 --> 00:13:58,259
+but still this other two terms still remain and give us a hard time.
+
+137
+00:13:58,259 --> 00:14:02,850
+But then, we remember that we can apply this trick with the law of total probability in
+
+138
+00:14:02,850 --> 00:14:09,120
+the denominator, so instead of computing this prior probability of a certain sensor reading
+
+139
+00:14:09,120 --> 00:14:14,149
+we can just replace it by a normalization constant and then say that we postpone this
+
+140
+00:14:14,149 --> 00:14:19,490
+normalization until the end because we know that this probability distribution over the
+
+141
+00:14:19,490 --> 00:14:24,769
+world state, our posterior probability distribution over the world state, has to sum to 1 at the
+
+142
+00:14:24,769 --> 00:14:29,639
+end because it needs to be a proper probability distribution.
+
+143
+00:14:29,639 --> 00:14:34,290
+And now, we still have one complicated term here on the right side the probability of
+
+144
+00:14:34,290 --> 00:14:44,970
+x given the sensor measurements of z_1 to z_(n-1). But now it becomes apparent that
+
+145
+00:14:44,970 --> 00:14:50,129
+this is actually the same as what we have started in the beginning. Just that we have
+
+146
+00:14:50,129 --> 00:14:56,339
+already removed now the latest sensor observation z_n.
+
+147
+00:14:56,339 --> 00:15:04,029
+So we could just apply again this principle Bayes rule recursively and this gives us then
+
+148
+00:15:04,029 --> 00:15:11,129
+a very neat expression as we see in the last line. So when we apply n times Bayes rule
+
+149
+00:15:11,129 --> 00:15:15,189
+then we obtain n normalization constants, but in principle that doesn't matter to us
+
+150
+00:15:15,189 --> 00:15:20,230
+because we, anyway, normalize then at the very end. And then, we take the product over all the
+
+151
+00:15:20,230 --> 00:15:29,170
+individual sensor models for the i'th sensor and only at the very end we need to multiply
+
+152
+00:15:29,170 --> 00:15:36,970
+with our prior probability of what we thought in which world state we are in the first place.
+
+153
+00:15:36,970 --> 00:15:43,249
+So now let's apply this to our toy example here. Again the quadrotor seeks for the landing
+
+154
+00:15:43,249 --> 00:15:50,379
+zone. It has detected the bright lamps below it but now let's assume that it has a second
+
+155
+00:15:50,379 --> 00:15:57,999
+sensor with which it can actually detect a visual marker, like this letter H for example
+
+156
+00:15:57,999 --> 00:16:04,880
+below the quadrotor, which gives a very strong indication whether or not we are at the landing site.
+
+157
+00:16:04,880 --> 00:16:11,389
+And for this marker again we can specify a causal sensor model.
+
+158
+00:16:11,389 --> 00:16:18,889
+So we can for example say that this sensor gives us a detection in 80% of the cases when
+
+159
+00:16:18,889 --> 00:16:24,740
+we are above the landing site. And it also gives us false-positives at a rate of 10%
+
+160
+00:16:24,740 --> 00:16:31,259
+if we are not above the landing site. And remember from out previous example we computed
+
+161
+00:16:31,259 --> 00:16:38,079
+a likelihood or probability of 67% that we think that we are above the landing site given that
+
+162
+00:16:38,079 --> 00:16:42,480
+we have observed the lights. So now let's assume that the robot does not
+
+163
+00:16:42,480 --> 00:16:51,699
+observe the visual marker bellow it and we get a second observation Z_2 that equals not marker.
+
+164
+00:16:51,699 --> 00:16:58,910
+And now the question is, what is the probability of being home now that we have obtained the
+
+165
+00:16:58,910 --> 00:17:04,260
+second sensor measurement? And now we can either apply this recursive Bayes rule from
+
+166
+00:17:04,260 --> 00:17:09,579
+the last slide or we can just apply Bayes rule once more and reuse the values that we
+
+167
+00:17:09,579 --> 00:17:11,119
+have already computed.
+
+168
+00:17:11,119 --> 00:17:20,290
+So by doing that and filling in the values we now obtain a probability of 31% after we have not observed
+
+169
+00:17:20,290 --> 00:17:21,300
+this visual marker.
+
+170
+00:17:21,300 --> 00:17:27,099
+And you can see that this second observation outweighs the first observation by a lot, which mostly
+
+171
+00:17:27,099 --> 00:17:33,820
+comes from the fact that this sensor  is much more specific which is reflected in
+
+172
+00:17:33,820 --> 00:17:38,320
+the probabilities stored in the sensor model.
+
+173
+00:17:38,320 --> 00:17:44,890
+And now, the second part as we said in the beginning or the second source of information
+
+174
+00:17:44,890 --> 00:17:50,760
+that we have are our actions and controls that we give to the motors. Those actions
+
+175
+00:17:50,760 --> 00:17:58,040
+of course also lead to changes in the world state, just because for example if we fly forward,
+
+176
+00:17:58,040 --> 00:18:03,900
+then obviously the position of the quadrotor changes and the position is most likely part
+
+177
+00:18:03,900 --> 00:18:06,940
+of our world state that we try to model.
+
+178
+00:18:06,940 --> 00:18:11,940
+But of course, other parts of the world state might also change that are not under our control
+
+179
+00:18:11,940 --> 00:18:19,320
+for example other agents or other quadrotors might move as well, there might be humans or other
+
+180
+00:18:19,320 --> 00:18:23,300
+things that are going on that have influence on the world state.
+
+181
+00:18:23,300 --> 00:18:28,080
+And even if we don't have other agents in the world the world state might change over
+
+182
+00:18:28,080 --> 00:18:37,390
+time because it has an intrinsic dynamics for example.
+
+183
+00:18:37,390 --> 00:18:42,260
+And now in any case the question is how can we incorporate the actions, and in particular
+
+184
+00:18:42,260 --> 00:18:47,360
+those actions that we are aware of, so to speak our own actions that we have send to
+
+185
+00:18:47,360 --> 00:18:49,740
+the motors.
+
+186
+00:18:49,740 --> 00:18:54,870
+So the typical actions that a quadrotor does is obviously to change the speed of its motors
+
+187
+00:18:54,870 --> 00:19:01,230
+which leads to a change in pitch and roll, and thrust, and so on.
+
+188
+00:19:01,230 --> 00:19:06,000
+But it's also important to know that even then the world state and in particular the
+
+189
+00:19:06,000 --> 00:19:10,940
+position of the quadrotor changes when the quadrotor does seemingly nothing, just because
+
+190
+00:19:10,940 --> 00:19:17,160
+the quadrotor is always in motion and so it will always drift and shake even if you see
+
+191
+00:19:17,160 --> 00:19:18,890
+to do nothing.
+
+192
+00:19:18,890 --> 00:19:23,210
+The other interesting observation here is that the actions are actually never carried
+
+193
+00:19:23,210 --> 00:19:32,550
+out with absolute certainty, so even if we specify to fly one meter forward we cannot
+
+194
+00:19:32,550 --> 00:19:38,180
+be sure that we actually ending up at the position of plus one meter.
+
+195
+00:19:38,180 --> 00:19:45,390
+So it is important to realize that actions generally lead to an increase of the uncertainty of
+
+196
+00:19:45,390 --> 00:19:53,020
+the state estimate. While measurements from sensors generally decrease the uncertainty
+
+197
+00:19:53,020 --> 00:19:59,580
+because we know better and better the more sensor observations we take where we actually are.
+
+198
+00:19:59,580 --> 00:20:07,690
+So as we said before to model the relationship between the world state and the actions we
+
+199
+00:20:07,690 --> 00:20:11,490
+need a motion model or an action model.
+
+200
+00:20:11,490 --> 00:20:18,830
+And this can be specified using conditional probability density functions where the new
+
+201
+00:20:18,830 --> 00:20:26,690
+state x' depends on our previous state x and the issued control command u.
+
+202
+00:20:26,690 --> 00:20:33,230
+So to illustrate this here with a simple example, consider the following toy example.
+
+203
+00:20:33,230 --> 00:20:40,470
+Imagine that we have a quadrotor and it can only execute a single action namely to takeoff. And for
+
+204
+00:20:40,470 --> 00:20:44,980
+some reasons we are only interested in a very small part of the world state namely whether
+
+205
+00:20:44,980 --> 00:20:48,550
+the quadrotor is on the ground or in the air.
+
+206
+00:20:48,550 --> 00:20:54,910
+And then, we can model that using a so called transition diagram as depicted here on the
+
+207
+00:20:54,910 --> 00:21:00,020
+slide. So the notes here correspond to the different
+
+208
+00:21:00,020 --> 00:21:06,770
+world states. So we have two notes, ground and air, and we have some arrows in between. Those
+
+209
+00:21:06,770 --> 00:21:13,870
+arrows indicate the transition probabilities between these states according to a certain
+
+210
+00:21:13,870 --> 00:21:16,390
+action. So when we are for example located on the
+
+211
+00:21:16,390 --> 00:21:21,610
+ground and we execute the takeoff command then with a probability of 90% the quadrotor
+
+212
+00:21:21,610 --> 00:21:27,380
+will actually takeoff but with a probability of 10% it will still stay on the ground. This
+
+213
+00:21:27,380 --> 00:21:32,540
+could have various reasons. For example, it might not receive this command
+
+214
+00:21:32,540 --> 00:21:39,330
+because the wireless connection is temporarily blocked or the battery might be empty. But
+
+215
+00:21:39,330 --> 00:21:44,130
+in principle you can consider all of this as being noise. And different states of the
+
+216
+00:21:44,130 --> 00:21:51,520
+world might have a different noise behavior in this motion model.
+
+217
+00:21:51,520 --> 00:21:56,320
+And then, once the quadrotor is in the air it will stay in the air with 99% probability,
+
+218
+00:21:56,320 --> 00:22:05,850
+but even then occasionally it will end up on the ground again for example because it runs out of battery.
+
+219
+00:22:05,850 --> 00:22:14,450
+And now, for actually estimating the world state based on the actions that we have issued
+
+220
+00:22:14,450 --> 00:22:19,760
+we use the following formula. The problem again is of course is that we want to estimate the
+
+221
+00:22:19,760 --> 00:22:25,000
+probability of the world state, given that we execute a certain command u.
+
+222
+00:22:25,000 --> 00:22:31,690
+And we cannot read this out from this motion model directly because we don't know what
+
+223
+00:22:31,690 --> 00:22:38,170
+the previous world state was. But as you know always when we are uncertain about the world
+
+224
+00:22:38,170 --> 00:22:43,880
+state we can just integrate over all possible world states or sum over all possible world
+
+225
+00:22:43,880 --> 00:22:50,700
+states x, and then, multiply the motion model with the prior probability with what we thought
+
+226
+00:22:50,700 --> 00:22:54,800
+that we are in this state.
+
+227
+00:22:54,800 --> 00:23:01,410
+And of course this applies both to the discrete case as this previous example, as well
+
+228
+00:23:01,410 --> 00:23:09,020
+to the continuous case when we are dealing with continuous positions in 2D or 3D.
+
+229
+00:23:09,020 --> 00:23:15,490
+So to illustrate this once more for the takeoff example: imagine that our prior belief
+
+230
+00:23:15,490 --> 00:23:19,190
+on the robot state is that the robot is located on the ground.
+
+231
+00:23:19,190 --> 00:23:28,530
+So P(x = ground) is 1, and then, the robot executes a takeoff action once. And then,
+
+232
+00:23:28,530 --> 00:23:36,570
+we are interested in computing the probability of the robot being still on the ground after
+
+233
+00:23:36,570 --> 00:23:38,100
+this action.
+
+234
+00:23:38,100 --> 00:23:44,060
+And we do this by filling in values by applying this formula from before and then filling
+
+235
+00:23:44,060 --> 00:23:50,920
+in values. And we see, we can confirm now algorithmically that the robot will still
+
+236
+00:23:50,920 --> 00:23:57,250
+be on the ground with a probability of 10%.
+
+237
+00:23:57,250 --> 00:24:04,190
+This summarizes this video. We've looked at the Bayes rule, today at the
+
+238
+00:24:04,190 --> 00:24:08,360
+derivation of the Bayes rule. And then, we have shown with various examples
+
+239
+00:24:08,360 --> 00:24:13,410
+how we can use the Bayes rule to actually fuse data from multiple sensor observations
+
+240
+00:24:13,410 --> 00:24:19,490
+into our state estimate. And how we can use the actions and motion
+
+241
+00:24:19,490 --> 00:24:24,730
+commands that we have issued to update our belief of the current world state.
+
+242
+00:24:24,730 --> 23:59:59,999
+And we will need both of that next week to introduce the Bayes filter and the Kalman filter.
+

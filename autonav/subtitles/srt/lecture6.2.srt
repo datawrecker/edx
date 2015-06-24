@@ -1,0 +1,1096 @@
+1
+00:00:00,830 --> 00:00:04,870
+Hello and welcome everybody to lecture video 6.2 on Kalman Filtering.
+
+2
+00:00:04,870 --> 00:00:09,940
+In this video we will introduce the basic linear Kalman Filter, which is a very efficient
+
+3
+00:00:09,940 --> 00:00:14,929
+implementation of the Bayes Filter that we looked at in the previous videos.
+
+4
+00:00:14,929 --> 00:00:20,400
+So as you remember from the previous video we introduced there the Histogram Filter to
+
+5
+00:00:20,400 --> 00:00:28,380
+estimate the position of a robot in 2D. And the Histogram Filter did that by representing
+
+6
+00:00:28,380 --> 00:00:36,630
+the state space by using a grid. And every cell in this grid then stores the probability
+
+7
+00:00:36,630 --> 00:00:42,300
+that the robot is located in this particular cell.
+
+8
+00:00:42,300 --> 00:00:49,300
+Although this is very easy to understand and very easy to implement it has several disadvantages,
+
+9
+00:00:49,300 --> 00:00:52,850
+and the most striking disadvantage is that it is very inefficient.
+
+10
+00:00:52,850 --> 00:00:57,460
+And the reason for that is that we need to discretize the state space of course, and
+
+11
+00:00:57,460 --> 00:01:08,410
+even in a 2 dimensional world we already need quite many cells to represent the state space.
+
+12
+00:01:08,410 --> 00:01:14,670
+So even in 2D with a reasonable resolution you can end up quickly with maybe a grid of
+
+13
+00:01:14,670 --> 00:01:22,220
+100 by 100 or 1000 by 1000. And that needs lots of memory of course but also on the other
+
+14
+00:01:22,220 --> 00:01:27,140
+hand this needs lots of computational power to update the whole grid.
+
+15
+00:01:27,140 --> 00:01:37,070
+While this is still feasible for 2D, and actually occasional used by scientists and robotists,
+
+16
+00:01:37,070 --> 00:01:39,450
+it scales very poorly with higher dimensions.
+
+17
+00:01:39,450 --> 00:01:46,030
+So imagine that you need to estimate 3 degrees of freedom, then the number of cells already
+
+18
+00:01:46,030 --> 00:01:50,520
+grows cubically. And if we would like to estimate a state of
+
+19
+00:01:50,520 --> 00:01:58,020
+a 6 DOF pose in 3D then this grows extremely quickly.
+
+20
+00:01:58,020 --> 00:02:04,170
+And the other problem is, if you want to have a reasonable resolution, say for example you want to know
+
+21
+00:02:04,170 --> 00:02:11,640
+the position of the quadrotor up to a centimeter or so, then you need even for a few meters
+
+22
+00:02:11,640 --> 00:02:17,959
+a hundreds and thousands of cells along every dimension.
+
+23
+00:02:17,959 --> 00:02:22,530
+So the question is: isn't there a way to represent this state more efficiently?
+
+24
+00:02:22,530 --> 00:02:29,450
+And this is now where the Kalman Filter comes in. The Kalman Filter does that by representing
+
+25
+00:02:29,450 --> 00:02:35,380
+the state in a different way, namely using normal distributions. Which means that we
+
+26
+00:02:35,380 --> 00:02:41,620
+have to store much less information, simply the mean and the covariance to represent the state.
+
+27
+00:02:41,620 --> 00:02:46,660
+And the second advantage is that because it represents the state using a continuous random
+
+28
+00:02:46,660 --> 00:02:53,510
+variable it doesn't have this discretization effect of the grid filter.
+
+29
+00:02:53,510 --> 00:02:58,099
+So the interesting thing is that the Kalman Filter has been developed and used for the
+
+30
+00:02:58,099 --> 00:03:00,840
+first time in the late 50s.
+
+31
+00:03:00,840 --> 00:03:10,140
+It was actually developed by the NASA in the Apollo program, so its first application already
+
+32
+00:03:10,140 --> 00:03:19,380
+was aerial or space navigation to estimate the trajectory of the Apollo rockets.
+
+33
+00:03:19,380 --> 00:03:26,140
+And the cool thing is, and this is also why it was capable in the 50s, it is super-efficient
+
+34
+00:03:26,140 --> 00:03:33,080
+because it requires only very few matrix operations and very few numbers even if you have 6 degrees
+
+35
+00:03:33,080 --> 00:03:36,370
+of freedom or 10 or so.
+
+36
+00:03:36,370 --> 00:03:42,959
+And its applications today are very wide, so it is not only used in robotics and space
+
+37
+00:03:42,959 --> 00:03:51,020
+navigation, but also for diverse things such as economics and weather forecasting.
+
+38
+00:03:51,020 --> 00:03:57,700
+So at basis of the Kalman Filter we have the normal distribution to represent the state.
+
+39
+00:03:57,700 --> 00:04:02,480
+I guess most of you will have seen normal distributions before, just to remind you a
+
+40
+00:04:02,480 --> 00:04:04,440
+bit how this looks like.
+
+41
+00:04:04,440 --> 00:04:12,120
+First let's only look at one dimensional normal distributions which are also called univariate
+
+42
+00:04:12,120 --> 00:04:17,059
+normal distributions. Imagine we have a random variable of which we say that it is normally distributed
+
+43
+00:04:17,059 --> 00:04:26,969
+and we write X~N and then the parameters of such a normal distribution are its mean value
+
+44
+00:04:26,969 --> 00:04:34,520
+and its variance. And this variance can also be written as the squared standard deviation
+
+45
+00:04:34,520 --> 00:04:41,069
+and the standard deviation is usually abbreviated with a lower case sigma.
+
+46
+00:04:41,069 --> 00:04:49,569
+And then, we can specify a probability density function for that X takes a particular value
+
+47
+00:04:49,569 --> 00:05:02,059
+and this is then given by this negative exponential, which looks like this bell shape.
+
+48
+00:05:02,059 --> 00:05:08,210
+And now it's interesting to note that the most likely spot always is at the mean of
+
+49
+00:05:08,210 --> 00:05:14,249
+the normal distribution. And the further you go away the less likely the values become.
+
+50
+00:05:14,249 --> 00:05:22,319
+And just for having an intuitive feeling what's this covariance actually means is that within
+
+51
+00:05:22,319 --> 00:05:29,580
+one standard deviation around the mean we already have 68% of the probability mass,
+
+52
+00:05:29,580 --> 00:05:38,400
+and within 3 standard deviations around then mean we already have 99% of the mass.
+
+53
+00:05:38,400 --> 00:05:44,300
+We can extend this easily to multivariate normal distributions. I indicate this here again
+
+54
+00:05:44,300 --> 00:05:53,099
+by bold capital letters, so this X here has multiple dimensions, for example 2 or 3 or
+
+55
+00:05:53,099 --> 00:06:01,339
+6. And then of course also the mean vector needs to be a vector to specify the mean and
+
+56
+00:06:01,339 --> 00:06:07,449
+instead of having the simple variance we now have a so called covariance matrix.
+
+57
+00:06:07,449 --> 00:06:14,050
+And then again, we can specify the probability density function, which looks almost exactly
+
+58
+00:06:14,050 --> 00:06:26,409
+the same, just that we need to use this covariance matrix here and invert it in the exponent.
+
+59
+00:06:26,409 --> 00:06:32,599
+This is now a visualization of how this density looks like in 2D.
+
+60
+00:06:32,599 --> 00:06:44,369
+So here we have a random variable, which has two dimensions x and y. And now the z direction
+
+61
+00:06:44,369 --> 00:06:47,830
+gives the probability density at this location x and y.
+
+62
+00:06:47,830 --> 00:06:55,210
+And you can see that it still has this bell shape, but now the covariance matrix can shape
+
+63
+00:06:55,210 --> 00:07:00,069
+the appearance of this bell.
+
+64
+00:07:00,069 --> 00:07:08,360
+It can be symmetric and a nice around the bell but it can also be stretched in one direction
+
+65
+00:07:08,360 --> 00:07:14,270
+and it can be rotated. And therefore, it also makes sense to look at the
+
+66
+00:07:14,270 --> 00:07:21,020
+probability density function from above because sometimes it's a bit hard to see how this
+
+67
+00:07:21,020 --> 00:07:26,789
+covariance actually looks like in 3D. So if you would move the camera up and then
+
+68
+00:07:26,789 --> 00:07:32,860
+look from the top on to your plot you can visualize it of course with colors, but you
+
+69
+00:07:32,860 --> 00:07:38,740
+can also visualize with so called Isolines at a particular height and then again you
+
+70
+00:07:38,740 --> 00:07:45,969
+can find heights that correspond to certain probability masses inside of them. For example,
+
+71
+00:07:45,969 --> 00:07:52,819
+you can say that everything which is located inside this red ellipse here has a mass of
+
+72
+00:07:52,819 --> 00:08:01,800
+68% for example. But even more common is to have an Isoline of 95% or 99% for example.
+
+73
+00:08:01,800 --> 00:08:09,349
+Now, a few properties of normal distributions, which are important later for the Kalman Filter.
+
+74
+00:08:09,349 --> 00:08:16,599
+So the first good news is that normal distributions behave linearly, so if we have one random
+
+75
+00:08:16,599 --> 00:08:23,330
+variable X that is normal distributed with a mean of µ and a covariance sigma. And we
+
+76
+00:08:23,330 --> 00:08:32,229
+now define a random variable Y that is a linear combination of a matrix A times X plus some
+
+77
+00:08:32,229 --> 00:08:38,580
+offset B. Then we can directly move this coefficients into the normal distribution. So we know then
+
+78
+00:08:38,580 --> 00:08:49,820
+that this Y is normally distributed again with a mean of A times µ plus B, and a covariance
+
+79
+00:08:49,820 --> 00:08:53,820
+of A times Sigma times A transposed.
+
+80
+00:08:53,820 --> 00:08:59,630
+And the other good news is that if you intersect two Gaussians then you obtain again a Gaussian.
+
+81
+00:08:59,630 --> 00:09:03,990
+So you can imagine this as follows, you have two random variables X_1 and X_2 and both
+
+82
+00:09:03,990 --> 00:09:07,700
+of them are normally distributed, but with different parameters.
+
+83
+00:09:07,700 --> 00:09:16,400
+Then you could compute an intersection just by multiplying this to densities together,
+
+84
+00:09:16,400 --> 00:09:21,960
+and if you fill in the values then you see immediately that the result has to be again
+
+85
+00:09:21,960 --> 00:09:27,680
+a normal distribution and the interesting thing is now to look at how the new mean and
+
+86
+00:09:27,680 --> 00:09:32,790
+the covariance is computed. And we can see that the new mean is actually
+
+87
+00:09:32,790 --> 00:09:43,380
+weighted average between the old means weighted by the covariance. So essentially, say for
+
+88
+00:09:43,380 --> 00:09:50,310
+example the second Gaussian here has a very large covariance so it's a very brought and
+
+89
+00:09:50,310 --> 00:10:03,820
+very wide uncertain distribution. For example X_1 is really narrow and has a very small
+
+90
+00:10:03,820 --> 00:10:09,200
+covariance, so the random variable X_1 has much less uncertainty then random variable
+
+91
+00:10:09,200 --> 00:10:19,040
+X_2. Then the result of the intersection will be strongly influenced by µ_1, so by the
+
+92
+00:10:19,040 --> 00:10:26,450
+first random variable because Sigma_2 is large and Sigma_1 is relatively small. So the influence
+
+93
+00:10:26,450 --> 00:10:33,800
+of µ_2 will be relatively limited. And then, we can also compute a new covariance, essentially
+
+94
+00:10:33,800 --> 00:10:38,710
+by adding the inverse of the individual covariances and taking then again the inverse.
+
+95
+00:10:38,710 --> 00:10:46,710
+And this generaly means that the uncertainty shrinks, so the covariance shrinks, which
+
+96
+00:10:46,710 --> 00:10:55,160
+means that if you combine two Gaussians then the result will be narrower and more certain
+
+97
+00:10:55,160 --> 00:10:58,980
+than the original covariances.
+
+98
+00:10:58,980 --> 00:11:09,260
+And now, let's look again how we can define a process model using these normal distributions.
+
+99
+00:11:09,260 --> 00:11:16,180
+We had before this stochastic process, which is also called a Markov chain. So we have
+
+100
+00:11:16,180 --> 00:11:22,760
+the state in the middle, which is now a vector and we have controls u that influence this
+
+101
+00:11:22,760 --> 00:11:28,540
+state and we have sensor observations z that we can compute given the state. Now our goal
+
+102
+00:11:28,540 --> 00:11:36,350
+is to estimate the x here in the middle, the x_t, from the previous state the controls
+
+103
+00:11:36,350 --> 00:11:41,640
+and the observations that we make.
+
+104
+00:11:41,640 --> 00:11:47,760
+Now, the first ides of course is to represent the full state which is also our belief by
+
+105
+00:11:47,760 --> 00:11:53,300
+a Gaussian, so we say this random variable X is normally distributed with a certain mean
+
+106
+00:11:53,300 --> 00:12:02,620
+µ_t and a covariance Sigma_t. And this state now evolves linearly over time for the moment.
+
+107
+00:12:02,620 --> 00:12:08,930
+For the moment we assume we have a linear relationship, which means that the new state
+
+108
+00:12:08,930 --> 00:12:14,790
+is linear combination of the old state. So we multiply a matrix A, the system matrix
+
+109
+00:12:14,790 --> 00:12:19,290
+also called, times the previous state and obtain the new state.
+
+110
+00:12:19,290 --> 00:12:25,060
+But now, as we said we of course also issue controls and we furthermore assume now that
+
+111
+00:12:25,060 --> 00:12:31,600
+these controls influence our state, so we have a second matrix B called the control
+
+112
+00:12:31,600 --> 00:12:43,000
+matrix that says how this issued control is influencing our new state.
+
+113
+00:12:43,000 --> 00:12:49,440
+And then of course we always assume that there is some noise in our system. For example,
+
+114
+00:12:49,440 --> 00:12:55,560
+because the quadrotor shakes slightly or because there are other disturbances like wind that
+
+115
+00:12:55,560 --> 00:13:03,750
+we cannot model well and so we have to assume that there is a third term epsilon that is
+
+116
+00:13:03,750 --> 00:13:08,990
+our noise. And this noise is again normally distributed
+
+117
+00:13:08,990 --> 00:13:17,570
+around zero, so it is a so called zero-mean noise with a covariance of Q.
+
+118
+00:13:17,570 --> 00:13:23,090
+And this equation now describes how we model the evolution of our state, so the current
+
+119
+00:13:23,090 --> 00:13:32,320
+state is a linear combination of the old state, our controls and some zero-mean noise.
+
+120
+00:13:32,320 --> 00:13:41,770
+And now, we also want to find a sensor model that is linear. So we say that our sensor
+
+121
+00:13:41,770 --> 00:13:52,900
+observation z_t depends on the current state and is multiplied with a so called observation matrix C.
+
+122
+00:13:52,900 --> 00:14:00,680
+And again, for the observations we assume that they are noisy and this noise is again
+
+123
+00:14:00,680 --> 00:14:06,279
+Gaussian with zero-mean, so we can write now that the following equation that describes
+
+124
+00:14:06,279 --> 00:14:13,260
+our sensor model that the observation linearly depend on our previous state plus some zero-mean
+
+125
+00:14:13,260 --> 00:14:15,110
+noise delta.
+
+126
+00:14:15,110 --> 00:14:22,730
+So, to summarize this the Kalman Filter makes the following two model assumptions on this
+
+127
+00:14:22,730 --> 00:14:31,170
+discrete time stochastic process we assume that the state evolves linearly and is a combination
+
+128
+00:14:31,170 --> 00:14:37,190
+of our previous state, the controls and some system noise and we assume that we have a
+
+129
+00:14:37,190 --> 00:14:43,210
+linear sensor, where the sensor observation z depends linearly on the previous
+
+130
+00:14:43,210 --> 00:14:47,720
+state plus some noise. And important is again that we represent the
+
+131
+00:14:47,720 --> 00:14:56,690
+current state x as a normal distribution and we assume that the noise is normally distributed
+
+132
+00:14:56,690 --> 00:14:59,570
+with zero-mean.
+
+133
+00:14:59,570 --> 00:15:06,740
+So just to specify a few of these dimensions of these variables we assume that the state
+
+134
+00:15:06,740 --> 00:15:14,340
+comes from R^n, so a n-dimensional space. We assume that the controls come from an l-dimensional
+
+135
+00:15:14,340 --> 00:15:19,460
+space. And by no means l does not need to be the same as n.
+
+136
+00:15:19,460 --> 00:15:24,300
+So for example, we could have a 3-dimesnional state or a 5-dimesnional state but only a
+
+137
+00:15:24,300 --> 00:15:30,870
+2-dimesnional control. For example, if you have a car that is driving forward then it
+
+138
+00:15:30,870 --> 00:15:35,750
+has a, even in 2D it would have 3 degrees of freedom, so the state would be 3-dimesnional
+
+139
+00:15:35,750 --> 00:15:38,750
+for x, y, and phi.
+
+140
+00:15:38,750 --> 00:15:44,540
+And we only have two degrees of freedom for controlling, this is than called an under
+
+141
+00:15:44,540 --> 00:15:50,050
+activated system because we can only change the speed of driving and we can change the
+
+142
+00:15:50,050 --> 00:15:53,190
+angle of our steering wheel.
+
+143
+00:15:53,190 --> 00:15:58,320
+And then, we have observations which are k-dimensional and again, these observations do not need
+
+144
+00:15:58,320 --> 00:16:03,790
+to coincide with the dimensionality of our state or our controls. For example, we could
+
+145
+00:16:03,790 --> 00:16:09,620
+have a 3-dimesnional state but a 2-dimesnional observation, GPS for example from which we
+
+146
+00:16:09,620 --> 00:16:15,060
+only get our x and y position.
+
+147
+00:16:15,060 --> 00:16:21,630
+And then, we have the process equation that we've seen before, and this matrix A of course
+
+148
+00:16:21,630 --> 00:16:26,810
+then needs to be an n by n matrix. The matrix B that defines the influence of the controls
+
+149
+00:16:26,810 --> 00:16:33,420
+on to the state is a n times l matrix. And in our measurement equation we have this matrix
+
+150
+00:16:33,420 --> 00:16:38,880
+C, which needs to be a n times k matrix.
+
+151
+00:16:38,880 --> 00:16:47,070
+And as we said, we assume that our belief is Gaussian, in particular we have to make
+
+152
+00:16:47,070 --> 00:16:53,470
+certain assumptions on our initial belief, so in the first time step our prior belief on
+
+153
+00:16:53,470 --> 00:17:03,270
+where the robot is and it is of course a Gaussian but we need to specify for that µ_0 and Sigma_0.
+
+154
+00:17:03,270 --> 00:17:07,099
+And if we are uncertain about where the robot is in the beginning, then we could choose
+
+155
+00:17:07,099 --> 00:17:13,099
+this µ arbitrarily. For example, initialize it with zero and then set the covariance to
+
+156
+00:17:13,099 --> 00:17:20,349
+a very large matrix, which just means that we are just extremely uncertain and that we
+
+157
+00:17:20,349 --> 00:17:25,079
+almost have a flat distribution over the belief space.
+
+158
+00:17:25,079 --> 00:17:30,749
+And then, given these properties that we have seen before of normal distributions we can
+
+159
+00:17:30,749 --> 00:17:40,460
+compute the next state, which is again a Gaussian distribution then, just because it evolves
+
+160
+00:17:40,460 --> 00:17:49,169
+linearly. And we can make use of the linear property of normal distributions and also
+
+161
+00:17:49,169 --> 00:17:56,869
+the observations are Gaussian because they are similarly just a linear combination.
+
+162
+00:17:56,869 --> 00:18:05,289
+And now, if we apply this representation to the Bayes Filter we end up with a very efficient algorithm.
+
+163
+00:18:05,289 --> 00:18:11,980
+So just for reminding you of how the Bayes Filter look like, this is what we had in the
+
+164
+00:18:11,980 --> 00:18:20,059
+previous videos. The Bayes Filter keeps track of the belief
+
+165
+00:18:20,059 --> 00:18:24,610
+distribution, of the posterior at time step t over the state.
+
+166
+00:18:24,610 --> 00:18:37,780
+And it consists of two steps, it first integrates the motion u and then it integrates the sensor observations z.
+
+167
+00:18:37,780 --> 00:18:43,539
+So just to remind you how this looks like. And now we can fill in normal distributions
+
+168
+00:18:43,539 --> 00:18:46,690
+here first in the first step.
+
+169
+00:18:46,690 --> 00:18:56,909
+So our process model here is the  irst term for which we can just fill in the normal distribution
+
+170
+00:18:56,909 --> 00:19:06,999
+with the new mean and the new covariance. And we can fill in our previous belief which
+
+171
+00:19:06,999 --> 00:19:16,400
+is again just a normal distribution, so both of that actually directly can be filled in
+
+172
+00:19:16,400 --> 00:19:20,580
+in closed from the definition from the normal distribution.
+
+173
+00:19:20,580 --> 00:19:24,799
+And then, by multiplying this together if you write this out, which is actually not
+
+174
+00:19:24,799 --> 00:19:30,999
+too complicated to do, then you end up with a normal distribution again fortunately.
+
+175
+00:19:30,999 --> 00:19:39,070
+And this normal distribution then just has again a new mean and a new covariance that
+
+176
+00:19:39,070 --> 00:19:44,119
+can be computed from the matrices A, B, and Q.
+
+177
+00:19:44,119 --> 00:19:51,600
+And this new belief, belief bar as we call it because it's just a temporarily belief,
+
+178
+00:19:51,600 --> 00:19:58,179
+is then represented with a Gaussian µ bar and Sigma bar.
+
+179
+00:19:58,179 --> 00:20:03,700
+And then, we come to the second step of the Bayes Filter, where we need to apply the sensor model.
+
+180
+00:20:03,700 --> 00:20:08,070
+This step looks as follows, so we have this normalization constant that we ignore for
+
+181
+00:20:08,070 --> 00:20:14,759
+a moment. We fill in the normal distribution as we had
+
+182
+00:20:14,759 --> 00:20:18,950
+it and our previous belief. And if you multiply these two together, this
+
+183
+00:20:18,950 --> 00:20:27,100
+is a bit trickier to derive, you end up again with a normal distribution which consists
+
+184
+00:20:27,100 --> 00:20:35,249
+of a new mean and a new covariance. And now, the new mean is essentially the old
+
+185
+00:20:35,249 --> 00:20:42,639
+mean or the µ bar plus matrix K, which is called the Kalman Gain at that we look at
+
+186
+00:20:42,639 --> 00:20:50,519
+in a second, times our observation minus the predicted observation C µ bar.
+
+187
+00:20:50,519 --> 00:20:57,239
+So it is important to realize here that what the Kalman Filter actually is doing it blends
+
+188
+00:20:57,239 --> 00:21:06,899
+our previous estimate µ bar and the discrepancy between our sensor observation and our prediction.
+
+189
+00:21:06,899 --> 00:21:13,999
+And the degree to which we belief our sensor observation is determined by this Kalman Gain
+
+190
+00:21:13,999 --> 00:21:22,660
+here, this matrix K, which essentially depends on the ratio between different noise terms.
+
+191
+00:21:22,660 --> 00:21:36,070
+So for example, the uncertainty that we currently have in our state is this sigmar_bar_t and
+
+192
+00:21:36,070 --> 00:21:43,239
+the noise or the covariance of our sensor observations is this R. And so essentially
+
+193
+00:21:43,239 --> 00:21:51,080
+it depends on the ratio between our uncertainty Sigma and the uncertainty of our sensor observation R.
+
+194
+00:21:51,080 --> 00:22:00,970
+So for example, if we increase our uncertainty of the state Sigma then this Kalman Gain will
+
+195
+00:22:00,970 --> 00:22:07,999
+get larger and we will put more weight onto our sensor observation z_t - Cµ.
+
+196
+00:22:07,999 --> 00:22:18,720
+On the other hand, if our sensor noise goes up, if this R gets larger, because it get
+
+197
+00:22:18,720 --> 00:22:30,779
+inverted here a larger R means a smaller Kalman Gain. So the more nosily our sensor is, because it has a larger R, the
+
+198
+00:22:30,779 --> 00:22:35,499
+smaller this Kalman Gain will be. So the less we will trust our sensor reading and the more
+
+199
+00:22:35,499 --> 00:22:44,110
+we will just stick to our prediction from the model µ bar.
+
+200
+00:22:44,110 --> 00:22:51,029
+But nevertheless, in the end we obtain a normalized distribution with a new mean µ and a new
+
+201
+00:22:51,029 --> 00:22:53,629
+covariance Sigma.
+
+202
+00:22:53,629 --> 00:22:59,659
+So just to summarize now the equations of the Kalman Filter. We have again, like in
+
+203
+00:22:59,659 --> 00:23:05,559
+the Bayes Filter, the two steps of applying the motion model and the sensor model. Now
+
+204
+00:23:05,559 --> 00:23:10,279
+in case of the Kalman Filter the first step where we apply the motion model is also called
+
+205
+00:23:10,279 --> 00:23:15,279
+the prediction step because we make a prediction of our current state given the controls and
+
+206
+00:23:15,279 --> 00:23:22,019
+the normal evolution of our system. And the second step is also called the correction
+
+207
+00:23:22,019 --> 00:23:31,440
+step because we correct the estimate of our current pose given the sensor observation.
+
+208
+00:23:31,440 --> 00:23:38,240
+And one important aspect to note here again as with the Bayes Filter actually is:
+
+209
+00:23:38,240 --> 00:23:44,759
+that the prediction and correction step don't have to come alternatingly, so you could have five
+
+210
+00:23:44,759 --> 00:23:50,730
+prediction steps because you getting the odometry at a much higher frame rate and then one correction
+
+211
+00:23:50,730 --> 00:23:53,399
+step when you are getting a visual observation.
+
+212
+00:23:53,399 --> 00:24:05,840
+So these two steps can be executed in any arbitrary order depending on what your sensors give you.
+
+213
+00:24:05,840 --> 00:24:15,679
+There is of course more to say about the Kalman Filter, in particular, I have omitted all
+
+214
+00:24:15,679 --> 00:24:20,830
+the intermediate steps in the derivation but in case that you are interested in the derivations,
+
+215
+00:24:20,830 --> 00:24:24,889
+which are actually not too complicated to understand it's something that you can really
+
+216
+00:24:24,889 --> 00:24:30,009
+do by hand by yourself, then I would recommend to look at the Probabilistic Robotics book
+
+217
+00:24:30,009 --> 00:24:37,580
+of Thrun, Fox and Burgard. And in chapter 3 there is the full derivation of the Kalman
+
+218
+00:24:37,580 --> 00:24:43,619
+Filter containing all intermediate steps that you have to do.
+
+219
+00:24:43,619 --> 00:24:47,710
+So the good news now on the Kalman Filter is that it is extremely efficient, so it is
+
+220
+00:24:47,710 --> 00:24:52,739
+polynomial in the measurement dimensionality and state dimensionality. The only costly
+
+221
+00:24:52,739 --> 00:25:02,820
+thing that we have to do is that we have to invert this expression here, which depends
+
+222
+00:25:02,820 --> 00:25:09,909
+on the size of our observations and our states, but everything else is just a multiplication
+
+223
+00:25:09,909 --> 00:25:14,539
+of matrices which is extremely fast to compute.
+
+224
+00:25:14,539 --> 00:25:20,210
+And the other good thing is that it can be shown that this is actually the optimal solution,
+
+225
+00:25:20,210 --> 00:25:27,480
+so it is the best estimate that you can get if you have linear Gaussian systems and you
+
+226
+00:25:27,480 --> 00:25:32,080
+have linear Gaussian sensors.
+
+227
+00:25:32,080 --> 00:25:38,340
+This is a good approximation actually in most cases. Of course there are situations where it
+
+228
+00:25:38,340 --> 00:25:41,720
+is not a good approximation, but in most cases it is.
+
+229
+00:25:41,720 --> 00:25:48,450
+The only problem is that most robotic systems are of course nonlinear. So it is hard to
+
+230
+00:25:48,450 --> 00:25:58,749
+specify this very simple linear transformation matrix for the state or for the sensor.
+
+231
+00:25:58,749 --> 00:26:06,899
+Now let's look at how to deal with that nevertheless. So if you have a nonlinear function, instead
+
+232
+00:26:06,899 --> 00:26:11,619
+of having this linear dependency between the state and the current state we can introduce
+
+233
+00:26:11,619 --> 00:26:15,590
+a certain arbitrary nonlinear function that just takes the previous state and the control
+
+234
+00:26:15,590 --> 00:26:20,440
+u as input. And similarly we can define a nonlinear or
+
+235
+00:26:20,440 --> 00:26:25,980
+an arbitrarily observation or sensor function that given the current state makes a prediction
+
+236
+00:26:25,980 --> 00:26:31,659
+of our sensor measurement. Then the question is can we somehow use these nonlinear functions
+
+237
+00:26:31,659 --> 00:26:34,139
+in the Kalman Filter as well.
+
+238
+00:26:34,139 --> 00:26:41,070
+And in particular, the idea is can we actually linearize these functions, and then, the main
+
+239
+00:26:41,070 --> 00:26:48,359
+idea is to linearize these functions. And we can do that as follows, imagine we
+
+240
+00:26:48,359 --> 00:26:57,450
+have these nonlinear function g that we want to use in the Kalman Filter. Then we can just
+
+241
+00:26:57,450 --> 00:27:03,049
+apply a first order Taylor approximation where we linearize at our current pose estimate
+
+242
+00:27:03,049 --> 00:27:14,220
+µ at time step t-1. And then, we add the derivative of g with respect to the current
+
+243
+00:27:14,220 --> 00:27:25,139
+state times the distance of the current state from our linearization point µ. And this
+
+244
+00:27:25,139 --> 00:27:32,950
+derivative here is also called the Jacobian and it is a matrix. So remember g already
+
+245
+00:27:32,950 --> 00:27:38,909
+gives us a vector typically if our state is multidimensional and now we differentiate
+
+246
+00:27:38,909 --> 00:27:49,200
+this with respect to the state again. So we end up with an n by n matrix that we can multiply
+
+247
+00:27:49,200 --> 00:27:55,149
+with the distance from our linearization point to get this first order Taylor expansion.
+
+248
+00:27:55,149 --> 00:28:01,549
+The same can be done with the observation function, so here again this h refers to a
+
+249
+00:28:01,549 --> 00:28:09,450
+nonlinear function that we can approximate by taking the function value at our linearization
+
+250
+00:28:09,450 --> 00:28:14,889
+point µ bar. And then we add the product of the derivative
+
+251
+00:28:14,889 --> 00:28:21,779
+of this function h with respect to the state times the difference from our current state
+
+252
+00:28:21,779 --> 00:28:28,379
+minus our linearization point. And this again gives us a Jacobian now this
+
+253
+00:28:28,379 --> 00:28:40,420
+is called the observation or the sensor Jacobian capital H that we can multiply with the difference
+
+254
+00:28:40,420 --> 00:28:48,309
+from our current state and our linearization point to obtain the first order Taylor approximation
+
+255
+00:28:48,309 --> 00:28:50,989
+of our nonlinear function.
+
+256
+00:28:50,989 --> 00:28:57,509
+And now we can plug this into the Kalman Filter directly. So we have essentially almost the
+
+257
+00:28:57,509 --> 00:29:05,119
+same equations as before, just now we use our nonlinear motion function for the prediction
+
+258
+00:29:05,119 --> 00:29:17,940
+step to determine the µ bar. Then we use this Jacobian G to compute our covariance
+
+259
+00:29:17,940 --> 00:29:23,769
+based on the previous covariance and by adding this sensor noise.
+
+260
+00:29:23,769 --> 00:29:30,759
+And then in the correction step we again use directly our observation function h at our
+
+261
+00:29:30,759 --> 00:29:37,470
+current state estimate to make a prediction of what a sensor probably sees.
+
+262
+00:29:37,470 --> 00:29:44,109
+And then, this difference is multiplied by the Kalman Gain to update our state estimate
+
+263
+00:29:44,109 --> 00:29:53,559
+and to shrink the covariance then, to reduce the uncertainty by this sensor update we use
+
+264
+00:29:53,559 --> 00:30:00,139
+now this matrix H, which is the derivative of our nonlinear sensor function with respect
+
+265
+00:30:00,139 --> 00:30:03,720
+to our current state.
+
+266
+00:30:03,720 --> 00:30:12,039
+So to summarize this video. We've introduced the Kalman Filter first for the linear case,
+
+267
+00:30:12,039 --> 00:30:19,320
+and then, we stated that of course most robotics problems most interesting problems are not
+
+268
+00:30:19,320 --> 00:30:22,639
+linear. So we've shown a way how to linearize then
+
+269
+00:30:22,639 --> 00:30:29,559
+the sensor and the motion model and in this case this can then be used in the so called
+
+270
+00:30:29,559 --> 00:30:34,539
+Extended Kalman Filter to deal with such nonlinear sensor and motion models.
+
+271
+00:30:34,539 --> 00:30:40,729
+And because this was quite theoretical now the next we will show a very nice example
+
+272
+00:30:40,729 --> 00:30:46,720
+in 2D that hopefully shade some light on the inner functions of the Kalman Filter and also
+
+273
+00:30:46,720 --> 00:30:54,499
+give you some intuitive understanding of what the individual matrices mean and in particular
+
+274
+00:30:54,499 --> 23:59:59,999
+how the choice of this noise variables R and Q influence the estimate of the Kalman Filter.
+

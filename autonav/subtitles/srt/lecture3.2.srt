@@ -1,0 +1,776 @@
+1
+00:00:01,200 --> 00:00:05,519
+Hello and welcome everybody to Autonomous Navigation for Flying Robots.
+
+2
+00:00:05,519 --> 00:00:10,850
+In this video we look at sensors and of course in particular at sensors that are relevant
+
+3
+00:00:10,850 --> 00:00:15,120
+for quadrotors and micro aerial vehicles.
+
+4
+00:00:15,120 --> 00:00:18,970
+The most important sensor in every aerial vehicle is a so called inertial measurement
+
+5
+00:00:18,970 --> 00:00:24,919
+unit (IMU). That is a device that consist of accelerometers and gyroscopes to measure
+
+6
+00:00:24,919 --> 00:00:33,800
+the inertial motion of the quadrotor and it's typically used for altitude stabilization.
+
+7
+00:00:33,800 --> 00:00:37,070
+Range sensors are also important with that the ArDrone measures the distance from the
+
+8
+00:00:37,070 --> 00:00:43,010
+floor and controls that. And then GPS of course is a very important
+
+9
+00:00:43,010 --> 00:00:49,850
+sensor especially for flying outdoors. And cameras also are super important, for both,
+
+10
+00:00:49,850 --> 00:00:55,330
+estimating the horizontal speed if you have an optical flow sensor looking downwards or
+
+11
+00:00:55,330 --> 00:01:00,000
+for a forward camera to detect landmarks in the world.
+
+12
+00:01:00,000 --> 00:01:05,620
+As I have said internal measurement units typically consists of accelerometers, and
+
+13
+00:01:05,620 --> 00:01:13,700
+a single accelerometer measures the acceleration that is applied to the sensor. You can imagine
+
+14
+00:01:13,700 --> 00:01:18,260
+such an accelerometer to look like a spring damper system in the easiest case. So you
+
+15
+00:01:18,260 --> 00:01:25,500
+have a mass that is attached with a spring to a support structure, and when you accelerate this
+
+16
+00:01:25,500 --> 00:01:32,900
+construction or this device in vertical direction then the mass will move up or down.
+
+17
+00:01:32,900 --> 00:01:40,200
+By then measuring the deflection of the mass you can get a measurement of the acceleration
+
+18
+00:01:40,200 --> 00:01:43,650
+that is applied to the sponsor.
+
+19
+00:01:43,650 --> 00:01:48,229
+Of course such an accelerometer measures all accelerations that are applied to it.
+
+20
+00:01:48,229 --> 00:01:53,470
+So if you have a vertical accelerometer then it will always measure the gravity.
+
+21
+00:01:53,470 --> 00:02:04,100
+So you have to take probably care of gravitation when you estimating the accelerating forces.
+
+22
+00:02:04,100 --> 00:02:09,800
+Gyroscopes measure the orientation if you have a standard gyroscope or they measure
+
+23
+00:02:09,800 --> 00:02:15,700
+the angular velocity, which is then called a rate gyro. In such a case you need to integrate
+
+24
+00:02:15,700 --> 00:02:19,500
+then the angular velocity to obtain the absolute angle.
+
+25
+00:02:19,500 --> 00:02:27,470
+So in the simplest case for building a gyroscope you can use a spinning wheel that's rotating
+
+26
+00:02:27,470 --> 00:02:32,900
+at a very high speed. And such a wheel is mounted with a gimbal
+
+27
+00:02:32,900 --> 00:02:38,650
+device that is a device which can rotate 3D around it. Then the spinning wheel will keep
+
+28
+00:02:38,650 --> 00:02:48,599
+its orientation no matter what you do to the case around it.
+
+29
+00:02:48,599 --> 00:02:56,000
+And in this way by measuring the orientation of the wheel inside, with respect to the outer
+
+30
+00:02:56,000 --> 00:03:02,040
+casing you can determine the orientation of yourself. Because the wheel will keep its
+
+31
+00:03:02,040 --> 00:03:09,100
+orientation no matter what we do around it. Such things have been constructed by many
+
+32
+00:03:09,100 --> 00:03:16,200
+people in the past and they can be used for example to measure the rotation of earth.
+
+33
+00:03:16,200 --> 00:03:25,600
+But they are also used in this way in airplanes; for example, in old airplanes where you really have these
+
+34
+00:03:25,600 --> 00:03:32,340
+spinning wheels and when you switch them on it also takes a while to reach their speed
+
+35
+00:03:32,340 --> 00:03:36,519
+and you can even hear them when you listen carefully.
+
+36
+00:03:36,519 --> 00:03:42,519
+Modern gyroscopes of course use different principles. Most common are MEMS sensors that
+
+37
+00:03:42,519 --> 00:03:49,600
+have vibrating structures inside. Their measurement principle is then based on the Coriolis effect.
+
+38
+00:03:49,600 --> 00:04:00,959
+So the vibration itself keeps its direction even if the sensor or the device is turned.
+
+39
+00:04:00,959 --> 00:04:09,540
+And then again you can use capacitive sensing to see whether this structure gets closer
+
+40
+00:04:09,540 --> 00:04:16,159
+or further away from the electrodes. And there are different types of such gyroscopes.
+
+41
+00:04:16,159 --> 00:04:21,560
+The most common one is called the tuning fork gyroscope, where you just have something that's
+
+42
+00:04:21,560 --> 00:04:27,280
+vibrating very quickly and keeps this position in a certain plane. And when you move or when
+
+43
+00:04:27,280 --> 00:04:34,800
+the sensor is rotated then this tuning fork will keep its orientation and virtually be
+
+44
+00:04:34,800 --> 00:04:38,889
+deflected with respect to the sensor itself.
+
+45
+00:04:38,889 --> 00:04:46,900
+You also have sensors that contain vibrating wheels and there are also laser based systems,
+
+46
+00:04:46,900 --> 00:04:52,430
+but typically not in this size class that is used for a quadrotor.
+
+47
+00:04:52,430 --> 00:04:59,870
+Inertial measurements units, also abbreviated as IMUs now combine both gyroscopes and accelerometers.
+
+48
+00:04:59,870 --> 00:05:05,949
+A single gyroscope is obviously not enough because it just measures the angular velocity
+
+49
+00:05:05,949 --> 00:05:09,100
+in one direction or around one axis.
+
+50
+00:05:09,100 --> 00:05:19,000
+This is why typically IMUs contain 3 gyroscopes next to each other, one for every axis.
+
+51
+00:05:19,000 --> 00:05:25,310
+And the gyroscope by itself provides only an angular velocity so you need to integrate
+
+52
+00:05:25,310 --> 00:05:31,800
+that over time to obtain the absolute angular position. But because the readings from the gyroscopes,
+
+53
+00:05:31,800 --> 00:05:39,460
+especially from such small gyroscopes, will be very noisy the angular position will drift
+
+54
+00:05:39,460 --> 00:05:49,500
+over time just because small errors over time will accumulate.
+
+55
+00:05:49,500 --> 00:05:55,080
+This drift can be relatively small, for example, 1 degree per hour. On smaller quadrotors or
+
+56
+00:05:55,080 --> 00:06:00,639
+if you have smaller gyroscopes then this can be even be 1 degree per second or 1 degree
+
+57
+00:06:00,639 --> 00:06:06,220
+per minute, depending on the quality.
+
+58
+00:06:06,220 --> 00:06:15,270
+Then there are also accelerometers in IMUs, again you need 3 of them to measure the acceleration
+
+59
+00:06:15,270 --> 00:06:22,400
+in all 3 spatial directions. An accelerometer provides accelerations and it also measures
+
+60
+00:06:22,400 --> 00:06:28,350
+of course the earth gravity.
+
+61
+00:06:28,350 --> 00:06:36,100
+From there you can again then integrate your estimated speed and estimated position.
+
+62
+00:06:36,100 --> 00:06:42,030
+This is usually done in an algorithm or in an implementation called IMU strapdown algorithm.
+
+63
+00:06:42,030 --> 00:06:47,160
+You get the date from the accelerometers and the gyroscopes, may let's start with the bottom
+
+64
+00:06:47,160 --> 00:06:55,229
+left. With the gyroscopes we're getting the angular rates in all 3 directions
+
+65
+00:06:55,229 --> 00:07:01,150
+and then the first computational block here just integrates those to obtain the attitude
+
+66
+00:07:01,150 --> 00:07:03,530
+just by adding them up.
+
+67
+00:07:03,530 --> 00:07:10,600
+And when you have the attitude you know in which direction you will expect a gravitational
+
+68
+00:07:10,600 --> 00:07:17,430
+force. So you can use that to compensate for gravity from the acceleration readings, which
+
+69
+00:07:17,430 --> 00:07:22,110
+means that after this gravity compensation you have the pure acceleration that is applied
+
+70
+00:07:22,110 --> 00:07:25,050
+to your IMU at the moment.
+
+71
+00:07:25,050 --> 00:07:30,350
+When you integrate this acceleration then you obtain the velocity of the device, and when you integrate
+
+72
+00:07:30,350 --> 00:07:32,319
+that again you get the position.
+
+73
+00:07:32,319 --> 00:07:41,850
+It should be noted of course, that when you integrate twice such noisy readings then the result
+
+74
+00:07:41,850 --> 00:07:48,759
+will be extremely noisy and extremely wrong. So the position integration of MEMS IMUs is
+
+75
+00:07:48,759 --> 00:07:55,110
+not useful over longer periods of time. But you can usually get rather good predictions
+
+76
+00:07:55,110 --> 00:08:06,000
+for the next 100ms maybe even up to 1 seconds or so, but after that it will be extremely inaccurate.
+
+77
+00:08:06,000 --> 00:08:13,500
+The estimated acceleration after gravity compensation then typically run through a low pass filter
+
+78
+00:08:13,500 --> 00:08:19,789
+to see if there is any acceleration remaining in a certain direction, and this is then usually
+
+79
+00:08:19,789 --> 00:08:26,900
+because the attitude is not completely right. This can be compensated by estimating the
+
+80
+00:08:26,900 --> 00:08:33,308
+bias of the gyroscope and then feeding it back into the attitude integration to compensate
+
+81
+00:08:33,308 --> 00:08:38,399
+for such a bias over longer periods of time.
+
+82
+00:08:38,399 --> 00:08:44,850
+GPS is also very important especially for flying outdoors. I guess most of you will
+
+83
+00:08:44,850 --> 00:08:50,089
+know the GPS system, as this is the same as every smartphone uses.
+
+84
+00:08:50,089 --> 00:08:57,069
+The idea is that you have many satellites circling earth and every satellite transmits
+
+85
+00:08:57,069 --> 00:08:59,739
+its position and time.
+
+86
+00:08:59,739 --> 00:09:08,500
+The receiver then receives these messages from the satellites and measures the time
+
+87
+00:09:08,500 --> 00:09:15,900
+difference in the individual signals between the individual time steps from the satellites.
+
+88
+00:09:15,900 --> 00:09:24,000
+Then by evaluating these differences the receiver can calculate the position on earth from these
+
+89
+00:09:24,000 --> 00:09:27,540
+so called pseudoranges.
+
+90
+00:09:27,540 --> 00:09:34,800
+There are a large number of satellites rotating around earth. Every satellite in the GPS-system
+
+91
+00:09:34,800 --> 00:09:42,989
+has a 12 hour orbit, they are flying roughly in 20.000 km height. There are 6 orbital planes
+
+92
+00:09:42,989 --> 00:09:49,040
+around earth and each of these planes has at least 4 satellites, typically much more.
+
+93
+00:09:49,040 --> 00:09:59,110
+They are located roughly at 60 degrees distance of each other, depending on how many satellites you have.
+
+94
+00:09:59,110 --> 00:10:05,279
+This ensures that there are always at least 4 satellites visible, typically much more.
+
+95
+00:10:05,279 --> 00:10:12,700
+As I said, every satellite transmits its orbital location, the so called almanach and the current
+
+96
+00:10:12,700 --> 00:10:21,730
+time. And because all satellites share the same frequency for transmission the transmission
+
+97
+00:10:21,730 --> 00:10:27,339
+rate is extremely low. It is only 50 bits per second. And this message there transmitting
+
+98
+00:10:27,339 --> 00:10:35,500
+has 1500 bits which is not much, but nevertheless, to transmit that it takes roughly 12.5 minutes.
+
+99
+00:10:35,500 --> 00:10:43,500
+So this is why a cold start of the receiver takes a very long time before you get the first fix.
+
+100
+00:10:43,500 --> 00:10:50,579
+GPS has 2 different modes of operation. The normal one that is used by the most smartphones
+
+101
+00:10:50,579 --> 00:10:56,700
+is called the position from pseudorange mode. For that the GPS receiver needs to see at
+
+102
+00:10:56,700 --> 00:11:03,290
+least 4 different satellites. It's 4 because the receiver has to estimate both, the current
+
+103
+00:11:03,290 --> 00:11:08,269
+time and its position on earth. And the position on earth is a 3 dimensional
+
+104
+00:11:08,269 --> 00:11:13,980
+vector depending on how you representing it, as longitude, latitude and elevation or simply
+
+105
+00:11:13,980 --> 00:11:22,200
+as x,y,z with respect to some reference point. But this means that we have to compute at
+
+106
+00:11:22,200 --> 00:11:28,600
+least 4 different values and for that we need 4 independent measurements.
+
+107
+00:11:28,600 --> 00:11:34,889
+This first mode of operation is relatively inaccurate, typically you get positioning
+
+108
+00:11:34,889 --> 00:11:39,920
+accuracy between 3 and 15 meters, depending on the equipment that you have, but also depending
+
+109
+00:11:39,920 --> 00:11:46,649
+on the atmospheric conditions. But it gives you an absolute position on earth and this
+
+110
+00:11:46,649 --> 00:11:57,500
+is very useful of course for navigation systems in cars, but also for airplanes and quadrotors.
+
+111
+00:11:57,500 --> 00:12:04,239
+The other mode of operation requires an additional base station or reference station. And the
+
+112
+00:12:04,239 --> 00:12:11,700
+idea then is to not only use the pseudoranges, but also to determine the exact phase shifts
+
+113
+00:12:11,700 --> 00:12:19,400
+of the signal between the receiver and the base station.
+
+114
+00:12:19,400 --> 00:12:27,799
+With that you can achieve extremely high accuracies typically far below 1 millimeter. But the
+
+115
+00:12:27,799 --> 00:12:32,769
+position that you then getting is not absolute on earth but it is relative with respect to
+
+116
+00:12:32,769 --> 00:12:37,629
+your reference station. Such systems are called real-time-kinematic-GPS
+
+117
+00:12:37,629 --> 00:12:44,249
+or differential-GPS, and become more and more affordable and also smaller. Such that we
+
+118
+00:12:44,249 --> 00:12:49,549
+can hope that they will sooner or later fit on our quadrotors.
+
+119
+00:12:49,549 --> 00:12:54,209
+The next sensor that is relevant for us are
+
+120
+00:12:54,209 --> 00:12:57,480
+range sensors, in particular ultrasound range sensors.
+
+121
+00:12:57,480 --> 00:13:07,759
+The idea of most range sensors is to have an active sensor to emit a signal and measure
+
+122
+00:13:07,759 --> 00:13:13,779
+the time the signal needs to return to the sender/receiver.
+
+123
+00:13:13,779 --> 00:13:20,939
+And when we are talking here about ultrasound, then we are effectively using the propagation
+
+124
+00:13:20,939 --> 00:13:28,189
+speed of ultrasound to determine then the distance between the sender/receiver and the object.
+
+125
+00:13:28,189 --> 00:13:34,779
+So here for example we can see the sender/receiver it sends out the red waves. These waves
+
+126
+00:13:34,779 --> 00:13:42,000
+are reflected by the object and then the receiver will here its echo.
+
+127
+00:13:42,000 --> 00:13:52,100
+And this time measurement times the velocity divided by 2, because the signal has to traverse
+
+128
+00:13:52,100 --> 00:13:55,899
+both the ways from left to right and then from right to left back again, gives directly the
+
+129
+00:13:55,899 --> 00:13:59,000
+distance. So this is a very simple measurement principle
+
+130
+00:13:59,000 --> 00:14:02,079
+and therefore it is very often used.
+
+131
+00:14:02,079 --> 00:14:07,369
+The disadvantage of course at least of ultrasound is that the range is limited. So you can only
+
+132
+00:14:07,369 --> 00:14:14,700
+do that up to a few meters, depending also on you surface it works less well on grass, it works
+
+133
+00:14:14,700 --> 00:14:21,199
+better of course on things like stone or better reflecting surfaces.
+
+134
+00:14:21,199 --> 00:14:28,400
+Another problem is that the opening angle of a speaker or microphone is whether large,
+
+135
+00:14:28,400 --> 00:14:36,100
+so typically the beam that is send out has an opening angle around 20 to 40 degrees.
+
+136
+00:14:36,100 --> 00:14:43,500
+And that means that it could also happen that you are measuring the distance to something else that's close
+
+137
+00:14:43,500 --> 00:14:45,779
+to your sensor.
+
+138
+00:14:45,779 --> 00:14:51,809
+And another problem of course is that the sensor doesn't work on certain objects that either
+
+139
+00:14:51,809 --> 00:14:58,540
+absorb the sound or reflect it in a different way, but that the sound doesn't return to the receiver.
+
+140
+00:14:58,540 --> 00:15:05,019
+But in any case the advantage here is that those sensors are extremely lightweight to
+
+141
+00:15:05,019 --> 00:15:11,179
+build, a few grams, and extremely cheap so you can get them for a few Euros. Probably if
+
+142
+00:15:11,179 --> 00:15:16,529
+you buy them in quantities they become even cheaper.
+
+143
+00:15:16,529 --> 00:15:21,759
+Then the last, and form our perspective in the computer vision group of course the most
+
+144
+00:15:21,759 --> 00:15:29,300
+interesting sensor is a camera. We have already seen in one of the previous videos how the pin-hole
+
+145
+00:15:29,300 --> 00:15:37,329
+camera looks like from a mathematical perspective. The idea is you have the world, and the world emits
+
+146
+00:15:37,329 --> 00:15:42,499
+some light because it is lit by the sun or by any other light source. And then the rays
+
+147
+00:15:42,499 --> 00:15:49,029
+from the object pass through the pin-hole and then fall onto the film or light sensor,
+
+148
+00:15:49,029 --> 00:15:55,329
+which is light sensitive and that we can read out then electronically.
+
+149
+00:15:55,329 --> 00:16:03,809
+Of course, most cameras don't use the pin-hole idea, but have a lens that focuses the light
+
+150
+00:16:03,809 --> 00:16:05,000
+on the film or sensor.
+
+151
+00:16:05,000 --> 00:16:11,259
+The advantage here is that you have a larger aperture, which means that more light is passed
+
+152
+00:16:11,259 --> 00:16:17,000
+on to the sensor. And that helps of course then during image acquisition.
+
+153
+00:16:17,000 --> 00:16:25,000
+The disadvantage of using lenses is that they typically induce some radial distortion on
+
+154
+00:16:25,000 --> 00:16:32,400
+the image. Depending on how expensive your lenses are this effect is stronger or less
+
+155
+00:16:32,400 --> 00:16:40,300
+strong. It's in particular bad for lenses that have large opening angles. So typically
+
+156
+00:16:40,300 --> 00:16:48,000
+for webcams this is not a large problem, but if you getting maybe above a 100 degrees opening
+
+157
+00:16:48,000 --> 00:16:58,400
+angle, then these deviations become visible very strongly. And the larger it gets the worst it gets.
+
+158
+00:16:58,400 --> 00:17:04,290
+Typically you can see these deviations especially in the corners of the image.
+
+159
+00:17:04,290 --> 00:17:16,019
+So if you see lines in the images that are not straight any more then you know that you are probably dealing with lens distortions.
+
+160
+00:17:16,019 --> 00:17:23,300
+In most cases there are different cases for modelling these distortions. A very common
+
+161
+00:17:23,300 --> 00:17:29,019
+model is to use a low order polynomial to describe the deviation from the ideal image
+
+162
+00:17:29,019 --> 00:17:31,539
+and the observed image.
+
+163
+00:17:31,539 --> 00:17:37,950
+So in this case you have this r here, which refers to the radius or the distance of the
+
+164
+00:17:37,950 --> 00:17:45,200
+optical center of your camera or of your image. And then this coefficients Kappa_1 and Kappa_2
+
+165
+00:17:45,200 --> 00:17:51,039
+refer to how strong this deviation is on your lens.
+
+166
+00:17:51,039 --> 00:17:56,960
+So now for being able to use these camera models we of course need to determine all
+
+167
+00:17:56,960 --> 00:18:00,990
+the coefficients in the models. For the pin-hole model this means that we
+
+168
+00:18:00,990 --> 00:18:08,300
+need to determine the focal length f_x and f_y, and also the optical center c_x and c_y.
+
+169
+00:18:08,300 --> 00:18:13,750
+For the distortion model we need to know the coefficients Kappa_1 and Kappa_2 and possibly
+
+170
+00:18:13,750 --> 00:18:16,400
+even higher order distortion coefficients.
+
+171
+00:18:16,400 --> 00:18:21,900
+And then, of course the question is: how can we actually determine these parameters?
+
+172
+00:18:21,900 --> 00:18:30,000
+A very common method for doing that is to show a checkerboard to the camera and
+
+173
+00:18:30,000 --> 00:18:36,700
+use that to establish correspondences between 3D points in the world and 2D points on the image.
+
+174
+00:18:36,700 --> 00:18:43,200
+And from such a set of observations the coefficients of the camera model can then
+
+175
+00:18:43,200 --> 00:18:48,330
+be determined. So in general every observation between a
+
+176
+00:18:48,330 --> 00:18:55,100
+2D point and a 3D point produces two constraints,  one for the x axis in the image and one for the y axis in the image.
+
+177
+00:18:55,100 --> 00:19:00,240
+And then you can use that to solve for the
+
+178
+00:19:00,240 --> 00:19:05,200
+intrinsic parameters, like the focal length and the optical center, but also the distortion coefficients.
+
+179
+00:19:05,200 --> 00:19:12,300
+So the image in the lower left shows the calibration toolbox in ROS for monocular cameras.
+
+180
+00:19:12,300 --> 00:19:20,500
+You just show a checkerboard in different configurations and also at different parts of the image.
+
+181
+00:19:20,500 --> 00:19:25,850
+It's usually a good idea to hold it close to the image borders because as we have seen
+
+182
+00:19:25,850 --> 00:19:31,190
+before the distortion is the largest close to the image border.
+
+183
+00:19:31,190 --> 00:19:33,830
+When you have taken enough of these observations
+
+184
+00:19:33,830 --> 00:19:42,800
+you can calibrate all the coefficients. And then here on the right this has already happened.
+
+185
+00:19:42,800 --> 00:19:48,500
+You can recognize that because now all the lines in the image are actually straight
+
+186
+00:19:48,500 --> 00:19:50,470
+as they should be.
+
+187
+00:19:50,470 --> 00:19:54,789
+So to summarize the lesson of today:
+
+188
+00:19:54,789 --> 00:20:00,429
+We've looked at various sensors that can be used on quadrotors and micro aerial vehicles.
+
+189
+00:20:00,429 --> 00:20:07,800
+We've seen that IMUs can be used to measure attitude, the velocity and the position of the vehicle.
+
+190
+00:20:07,800 --> 00:20:10,800
+We looked at range sensors that can be used to measure distances.
+
+191
+00:20:10,800 --> 00:20:15,000
+And we've looked at GPS to measure the global position
+
+192
+00:20:15,000 --> 00:20:22,600
+of a quadrotor when flying outdoors. And then lastly, we have looked at real cameras
+
+193
+00:20:22,600 --> 00:20:29,800
+and how they can be calibrated to establish the correspondence between 3D points in the world
+
+194
+00:20:29,800 --> 23:59:59,999
+ and 2D observations on the image plane.
+

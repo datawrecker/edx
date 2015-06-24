@@ -1,0 +1,372 @@
+1
+00:00:00,900 --> 00:00:05,570
+Hello and welcome back to the second week off our class on Autonomous Navigation for Flying Robots.
+
+2
+00:00:05,570 --> 00:00:12,030
+My name is Daniel Cremers, and I will start of this week's class where
+
+3
+00:00:12,030 --> 00:00:18,980
+we learn about 2D and 3D geometry, that we need to model the sensors of our quadrotor.
+
+4
+00:00:18,980 --> 00:00:27,300
+Before we get into modeling the geometry, I will give you a brief recap of linear algebra,
+
+5
+00:00:27,300 --> 00:00:32,609
+so that we're all on the same page and speak the same language. Most of this should already
+
+6
+00:00:32,609 --> 00:00:39,229
+be familiar to you, if it is not, than I strongly recommend that you first attend a class on
+
+7
+00:00:39,229 --> 00:00:46,780
+linear algebra before continuing here. The entities that we'll be working with in this
+
+8
+00:00:46,780 --> 00:00:55,999
+class are scalars vectors and matrices. Scalars are just real numbers that we denote by a
+
+9
+00:00:55,999 --> 00:01:04,739
+lower case letters typeset in italics. Vectors are sets of numbers they are in R^n that we
+
+10
+00:01:04,739 --> 00:01:14,149
+denote by lower case letters typeset in bold. And matrices are arrays of m by n numbers
+
+11
+00:01:14,149 --> 00:01:20,700
+that we denote in upper case letters typeset in bold.
+
+12
+00:01:20,700 --> 00:01:27,159
+When we talk about vectors we typically mean column vectors, which just means that you stack
+
+13
+00:01:27,159 --> 00:01:33,000
+the n numbers. There are many ways you can see and interpret vectors.
+
+14
+00:01:33,000 --> 00:01:42,119
+The most intuitive way is to think of a vector as a point in a n dimensional space. So for example, a 3D
+
+15
+00:01:42,119 --> 00:01:50,649
+vector simply denotes a point in 3D with the three components are its coordinates.
+
+16
+00:01:50,649 --> 00:01:56,240
+Once we have vectors we can define different operations on these vectors. We can define
+
+17
+00:01:56,240 --> 00:02:03,450
+scalar multiplication, which simply means you multiply the vector x by a scalar s and
+
+18
+00:02:03,450 --> 00:02:10,959
+what you obtain is another vector that has the same direction as x, but it is rescaled
+
+19
+00:02:10,959 --> 00:02:17,920
+by the number little s. With two vectors x and y we can define addition
+
+20
+00:02:17,920 --> 00:02:25,430
+and subtraction of vectors. Furthermore, for a vector x we can define the length of that
+
+21
+00:02:25,430 --> 00:02:31,290
+vector or the norm. There is actually different ways to measure the length, the one that we
+
+22
+00:02:31,290 --> 00:02:38,260
+use in this class is the most common one and that is the so called L2 norm or Euclidian
+
+23
+00:02:38,260 --> 00:02:49,300
+norm of this vector. And it simply corresponds to the square root of the sum of squared components.
+
+24
+00:02:49,300 --> 00:02:57,799
+Furthermore, we can define normalized vectors, which is here for a vector x for example the
+
+25
+00:02:57,799 --> 00:03:05,900
+normalized version x hat is obtained by dividing that vector by its length. What we obtain
+
+26
+00:03:05,900 --> 00:03:14,840
+than is a unit vector, so a vector of length one that has the same direction as x.
+
+27
+00:03:14,840 --> 00:03:22,060
+For two vectors we can define a dot product or scalar product denoted by this little dot here.
+
+28
+00:03:22,060 --> 00:03:29,150
+It's a scalar number associated with these two vectors, which is actually maximal
+
+29
+00:03:29,150 --> 00:03:35,409
+if the two vectors are in parallel, and then just corresponds to the product of their length.
+
+30
+00:03:35,409 --> 00:03:43,040
+And in general it denotes the projection of the vector x on to the vector y or vice versa.
+
+31
+00:03:43,040 --> 00:03:49,870
+And in the case that the two vectors are orthogonal the dot product is 0.
+
+32
+00:03:49,870 --> 00:03:57,769
+Furthermore, we can define for the vectors in R^3 a so called cross product, that is another
+
+33
+00:03:57,769 --> 00:04:06,180
+vector assigned to the two vectors x and y, which is orthogonal to the plane spanned by
+
+34
+00:04:06,180 --> 00:04:14,100
+x and y. And you can remember which direction it is pointing by the so called right hand rule.
+
+35
+00:04:14,100 --> 00:04:17,200
+And that rule says that if the first vector x
+
+36
+00:04:17,200 --> 00:04:22,880
+points in direction of your thumb and the second points into direction of your index
+
+37
+00:04:22,880 --> 00:04:31,670
+finger, then the cross product is a vector pointing in direction of the middle finger.
+
+38
+00:04:31,670 --> 00:04:36,830
+Here is a more formal definition of the cross product, which allows you to actually compute
+
+39
+00:04:36,830 --> 00:04:42,740
+the cross product for two vectors x and y. It's given by this expression on the right
+
+40
+00:04:42,740 --> 00:04:51,500
+hand side, which contains the various components x_i and y_i of two vectors x and y.
+
+41
+00:04:51,500 --> 00:04:57,890
+In addition, there is a matrix notation for the cross product, where we introduce this
+
+42
+00:04:57,890 --> 00:05:06,530
+skew- or anti-symmetric matrix, that contains the three elements of x, and then we can reproduce
+
+43
+00:05:06,530 --> 00:05:15,350
+the cross product of x and y by just multiplying the vector y with this matrix.
+
+44
+00:05:15,350 --> 00:05:21,640
+This turns out to be useful because it allows you to replace the cross product by a simple
+
+45
+00:05:21,640 --> 00:05:26,200
+matrix vector product.
+
+46
+00:05:26,200 --> 00:05:33,770
+For matrices we will use the following convention, an n by m matrix is an array of numbers, where
+
+47
+00:05:33,770 --> 00:05:39,420
+n denotes the number of rows and m the number of columns.
+
+48
+00:05:39,420 --> 00:05:46,450
+It has a lot of components, x_ij where the first index i refers to the row and second
+
+49
+00:05:46,450 --> 00:05:50,400
+index j refers to the column.
+
+50
+00:05:50,400 --> 00:05:56,500
+For matrices there is actually different types of matrices that we can distinguish.
+
+51
+00:05:56,500 --> 00:06:03,350
+Square matrices are matrices where the number of rows and columns is equal, in contrast
+
+52
+00:06:03,350 --> 00:06:10,520
+to the more general case of rectangular matrices. Than we have diagonal matrices, these are
+
+53
+00:06:10,520 --> 00:06:18,600
+matrices where only the diagonal elements are non-zero. In addition, we have upper and
+
+54
+00:06:18,600 --> 00:06:28,620
+lower diagonal matrices, which are matrices where the non-zero elements are all above or below the diagonal.
+
+55
+00:06:28,620 --> 00:06:34,910
+Furthermore, we have symmetric matrices, these are matrices where the transpose is equal
+
+56
+00:06:34,910 --> 00:06:42,020
+to the matrix itself. The transpose is obtained by mirroring along the diagonal, and so that
+
+57
+00:06:42,020 --> 00:06:46,620
+leaves the matrix unchanged for symmetric matrices.
+
+58
+00:06:46,620 --> 00:06:53,750
+In contrast to so called skew-symmetric or anti-symmetric matrices, where transposing
+
+59
+00:06:53,750 --> 00:06:58,030
+the matrix gives you the negative of that matrix.
+
+60
+00:06:58,030 --> 00:07:05,500
+Then, we have positive definite or positive semi-definite matrices. A positive definite
+
+61
+00:07:05,500 --> 00:07:15,600
+matrix is a matrix X such that for any vector a the quadratic form a transpose X a is always positive.
+
+62
+00:07:15,600 --> 00:07:22,900
+And positive semi-definite if it is always non-negative.
+
+63
+00:07:22,900 --> 00:07:30,500
+We have orthogonal matrices, these are matrices where the transpose is equal to the inverse.
+
+64
+00:07:30,500 --> 00:07:37,180
+We will see later in class that orthogonal matrices include rotation matrices but they
+
+65
+00:07:37,180 --> 00:07:42,460
+can also be for example mirroring.
+
+66
+00:07:42,460 --> 00:07:49,420
+There are many operations we define on matrices. For example, we can simply define a matrix-vector
+
+67
+00:07:49,420 --> 00:07:56,800
+multiplication where we multiply the vector x by the matrix M. Furthermore, we can define
+
+68
+00:07:56,800 --> 00:08:04,750
+matrix-matrix multiplications M_1 times M_2, provided of course that the dimensions of
+
+69
+00:08:04,750 --> 00:08:09,420
+the matrices are consistent. We'll see for example, that this allows to
+
+70
+00:08:09,420 --> 00:08:16,940
+model concatenations of rotations. Then we can define the inverse of a matrix
+
+71
+00:08:16,940 --> 00:08:26,860
+M^(-1). That assumes first of all that the matrix is a square matrix, and secondly that
+
+72
+00:08:26,860 --> 00:08:35,000
+the matrix is actually invertible. Invertible matrices can be identified by having a
+
+73
+00:08:35,000 --> 00:08:44,600
+non-zero determinant and by a full rank, equivalent. The transpose of a matrix, as I mentioned, is
+
+74
+00:08:44,600 --> 00:08:49,860
+obtained by simply mirroring along the diagonal.
+
+75
+00:08:49,860 --> 00:08:56,810
+Furthermore, there exist various decompositions of matrices. In this class we will be using
+
+76
+00:08:56,810 --> 00:09:02,980
+in particular the singular value decomposition and the eigendecomposition.
+
+77
+00:09:02,980 --> 00:09:09,220
+The singular value decomposition holds for any rectangular matrix. It tells you that
+
+78
+00:09:09,220 --> 00:09:18,400
+the matrix M can be decomposed into a product of matrices U Sigma V*, where U and V denote
+
+79
+00:09:18,400 --> 00:09:26,400
+orthogonal transformations, and Sigma is a diagonal matrix containing the singular values.
+
+80
+00:09:26,400 --> 00:09:33,000
+For square matrices we can define an eigendecomposition, where again M is decomposed as
+
+81
+00:09:33,000 --> 00:09:42,100
+Q Lambda Q inverse. Q being an orthogonal matrix and Lambda being a diagonal matrix, that contains
+
+82
+00:09:42,100 --> 00:09:48,459
+the eigenvalues little Lambda. There is the eigenvalue equation, which essentially
+
+83
+00:09:48,459 --> 00:09:57,000
+tells us that a vector v is an eigenvector to an eigenvalue Lambda if multiplying the
+
+84
+00:09:57,000 --> 00:10:04,900
+vector v with the matrix A does nothing but rescale the vector with Lambda.
+
+85
+00:10:04,900 --> 00:10:11,519
+In particular these decompositions the singular- and eigenvalue decomposition tell us a little
+
+86
+00:10:11,519 --> 00:10:17,100
+bit about how a matrix acts on vectors.
+
+87
+00:10:17,100 --> 00:10:23,800
+What have we learned in this class: we have learned a little bit recap on linear algebra,
+
+88
+00:10:23,800 --> 00:10:29,209
+we learned the notation that we will be using in this course, we learned about scalars,
+
+89
+00:10:29,209 --> 00:10:35,550
+vectors and matrices, and some of the most important operations on these.
+
+90
+00:10:35,550 --> 00:10:42,509
+As I mentioned, if this was not familiar to you, please do go and visit a class on linear
+
+91
+00:10:42,509 --> 00:10:45,930
+algebra to get back up on track.
+
+92
+00:10:45,930 --> 00:10:53,700
+In the next class we will then see how these notations and terms can be used to model 2D
+
+93
+00:10:53,700 --> 23:59:59,999
+and 3D geometry that we need to model this sensors of our quadrotor.
+
